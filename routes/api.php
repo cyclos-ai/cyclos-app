@@ -1,0 +1,54 @@
+<?php
+
+use App\Http\Controllers\Api\V1\Auth\AuthController;
+use App\Http\Controllers\Api\V1\User\UserController;
+use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| API Routes (Central / Public)
+|--------------------------------------------------------------------------
+| Auth endpoint and user-profile routes that do not require tenant context.
+| Tenant-scoped routes are registered in routes/tenant.php by stancl/tenancy.
+*/
+
+// OAuth2 token endpoint — throttled separately from API calls
+Route::post('/auth/token', [AuthController::class, 'postToken'])
+    ->middleware('throttle:auth')
+    ->name('auth.token');
+
+// SPA auth routes (no tenant context required)
+Route::prefix('v1/auth')->name('v1.auth.')->group(function () {
+    Route::post('/login',    [AuthController::class, 'login'])->name('login');
+    Route::post('/logout',   [AuthController::class, 'logout'])->name('logout');
+    Route::get('/me',        [AuthController::class, 'me'])->name('me');
+    Route::post('/register', [\App\Http\Controllers\Api\V1\Auth\RegistrationController::class, 'register'])->name('register');
+});
+
+// Authenticated user routes (no tenant context required)
+Route::middleware(['auth:api'])
+    ->prefix('v1')
+    ->name('v1.')
+    ->group(function () {
+        Route::get('/users/me',           [UserController::class, 'profile'])->name('users.me');
+        Route::put('/users/me',           [UserController::class, 'updateProfile'])->name('users.me.update');
+        Route::put('/users/me/password',  [UserController::class, 'changePassword'])->name('users.me.password');
+        Route::get('/users/supported-scacs', [UserController::class, 'supportedScacs'])->name('users.supported-scacs');
+    });
+
+// Carrier inbound webhooks (no auth — validated by HMAC signature)
+Route::post('/v1/carrier-webhooks/{scac}', [\App\Http\Controllers\Api\V1\Carrier\CarrierWebhookController::class, 'receive'])
+    ->middleware('throttle:60,1')
+    ->name('v1.carrier-webhooks.receive');
+
+// Admin onboarding routes
+Route::middleware(['auth:api'])
+    ->prefix('v1/admin')
+    ->name('v1.admin.')
+    ->group(function () {
+        Route::get('/registrations',                   [\App\Http\Controllers\Api\V1\Admin\OnboardingController::class, 'index'])->name('registrations.index');
+        Route::get('/registrations/{uuid}',            [\App\Http\Controllers\Api\V1\Admin\OnboardingController::class, 'show'])->name('registrations.show');
+        Route::post('/registrations/{uuid}/approve',   [\App\Http\Controllers\Api\V1\Admin\OnboardingController::class, 'approve'])->name('registrations.approve');
+        Route::post('/registrations/{uuid}/reject',    [\App\Http\Controllers\Api\V1\Admin\OnboardingController::class, 'reject'])->name('registrations.reject');
+        Route::post('/invite',                         [\App\Http\Controllers\Api\V1\Admin\OnboardingController::class, 'invite'])->name('invite');
+    });

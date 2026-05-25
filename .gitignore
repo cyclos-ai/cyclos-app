@@ -1,0 +1,43 @@
+/.phpunit.cache
+/node_modules
+/public/build
+/public/hot
+/public/storage
+/storage/*.key
+/vendor
+.env
+.env.backup
+.env.production
+.phpunit.result.cache
+Homestead.json
+Homestead.yaml
+auth.json
+npm-debug.log
+yarn-error.log
+
+# IDE
+/.fleet
+/.idea
+/.vscode
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude/OMC working directories
+.omc/state/
+.omc/logs/
+.omc/notepad.md
+.claude/worktrees/
+.claude/projects/
+.claude/settings.local.json
+.claude/credentials.json
+.claude/statsig/
+.claude/todos/
+.claude/sessions/
+
+# Skill repo .git dirs (we keep the skill files, not their git history)
+.claude/skills/*/.git
+.claude/skills/*/.github

@@ -1,0 +1,98 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* -------------------------------------------------------
+   Cyclos.ai Design System
+   Font: DM Sans (Google Fonts — loaded in app.blade.php)
+   Primary: Teal (#06c4a7 family)
+   Neutrals: Slate-teal tinted (never pure gray)
+   Motion: ease-out-quart for interactions
+   ------------------------------------------------------- */
+
+:root {
+    --cyclos-primary: #06c4a7;
+    --cyclos-primary-dark: #067e6f;
+    --cyclos-secondary: #0ea5e9;
+    --cyclos-surface-dark: #161e1e;
+    --cyclos-surface-light: #f7f9f9;
+
+    /* Motion tokens */
+    --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --duration-fast: 120ms;
+    --duration-normal: 200ms;
+    --duration-slow: 360ms;
+}
+
+body {
+    font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+    background-color: var(--cyclos-surface-light);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Sidebar transition */
+.sidebar-collapsed {
+    width: 4rem;
+}
+
+.sidebar-expanded {
+    width: 16rem;
+}
+
+/* Status badge colors — tinted backgrounds, no pure gray */
+.status-active { @apply bg-sky-100 text-sky-800; }
+.status-at-terminal { @apply bg-amber-100 text-amber-800; }
+.status-delivered { @apply bg-emerald-100 text-emerald-800; }
+.status-not-tracking { @apply bg-surface-100 text-surface-600; }
+.status-on-vessel { @apply bg-violet-100 text-violet-800; }
+.status-in-transit { @apply bg-primary-100 text-primary-800; }
+.status-empty-return { @apply bg-orange-100 text-orange-800; }
+.status-customs-hold { @apply bg-rose-100 text-rose-800; }
+
+/* Demurrage urgency */
+.urgency-green { @apply bg-emerald-50 border-l-4 border-emerald-500; }
+.urgency-yellow { @apply bg-amber-50 border-l-4 border-amber-500; }
+.urgency-red { @apply bg-rose-50 border-l-4 border-rose-500; }
+
+/* Timeline */
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: 1.25rem;
+    top: 2rem;
+    bottom: -1rem;
+    width: 2px;
+    background-color: #d8e0e0; /* surface-200 */
+}
+
+.timeline-item:last-child::before {
+    display: none;
+}
+
+/* PrimeVue overrides */
+.p-datatable .p-datatable-thead > tr > th {
+    background-color: #f7f9f9; /* surface-50 */
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #596c6c; /* surface-600 */
+}
+
+.p-tag {
+    font-size: 0.7rem;
+}
+
+/* Interactive feedback — micro-interactions per Emil design rules */
+@layer utilities {
+    .press-scale {
+        transition: transform var(--duration-fast) var(--ease-out-quart),
+                    box-shadow var(--duration-normal) var(--ease-out-quart);
+    }
+    .press-scale:active {
+        transform: scale(0.97);
+    }
+}

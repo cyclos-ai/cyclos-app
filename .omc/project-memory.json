@@ -1,0 +1,481 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1779488501984,
+  "projectRoot": "C:\\Users\\Luis Lopez\\Documents\\GitHub\\GnosisFreight",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "PHP",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "composer.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "vue",
+        "version": "3.4",
+        "category": "frontend"
+      },
+      {
+        "name": "vite",
+        "version": "5.0",
+        "category": "build"
+      }
+    ],
+    "packageManager": "composer",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "npm run build",
+    "testCommand": null,
+    "lintCommand": null,
+    "devCommand": "npm run dev",
+    "scripts": {
+      "dev": "vite",
+      "build": "vite build",
+      "preview": "vite preview"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "app",
+      "public",
+      "tests"
+    ],
+    "gitBranches": null
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "app": {
+      "path": "app",
+      "purpose": "Application code",
+      "fileCount": 0,
+      "lastAccessed": 1779488501903,
+      "keyFiles": []
+    },
+    "bootstrap": {
+      "path": "bootstrap",
+      "purpose": null,
+      "fileCount": 2,
+      "lastAccessed": 1779488501904,
+      "keyFiles": [
+        "app.php",
+        "providers.php"
+      ]
+    },
+    "config": {
+      "path": "config",
+      "purpose": "Configuration files",
+      "fileCount": 6,
+      "lastAccessed": 1779488501918,
+      "keyFiles": [
+        "app.php",
+        "auth.php",
+        "cors.php",
+        "database.php",
+        "queue.php"
+      ]
+    },
+    "database": {
+      "path": "database",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1779488501919,
+      "keyFiles": []
+    },
+    "public": {
+      "path": "public",
+      "purpose": "Public files",
+      "fileCount": 1,
+      "lastAccessed": 1779488501920,
+      "keyFiles": [
+        "index.php"
+      ]
+    },
+    "resources": {
+      "path": "resources",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1779488501921,
+      "keyFiles": []
+    },
+    "routes": {
+      "path": "routes",
+      "purpose": "Route handlers",
+      "fileCount": 4,
+      "lastAccessed": 1779488501921,
+      "keyFiles": [
+        "api.php",
+        "console.php",
+        "tenant.php",
+        "web.php"
+      ]
+    },
+    "storage": {
+      "path": "storage",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1779488501922,
+      "keyFiles": []
+    },
+    "tests": {
+      "path": "tests",
+      "purpose": "Test files",
+      "fileCount": 0,
+      "lastAccessed": 1779488501923,
+      "keyFiles": []
+    },
+    "app\\Models": {
+      "path": "app\\Models",
+      "purpose": "Data models",
+      "fileCount": 0,
+      "lastAccessed": 1779488501924,
+      "keyFiles": []
+    },
+    "database\\migrations": {
+      "path": "database\\migrations",
+      "purpose": "Database migrations",
+      "fileCount": 0,
+      "lastAccessed": 1779488501926,
+      "keyFiles": []
+    },
+    "resources\\views": {
+      "path": "resources\\views",
+      "purpose": "View templates",
+      "fileCount": 1,
+      "lastAccessed": 1779488501927,
+      "keyFiles": [
+        "app.blade.php"
+      ]
+    },
+    "storage\\app": {
+      "path": "storage\\app",
+      "purpose": "Application code",
+      "fileCount": 0,
+      "lastAccessed": 1779488501929,
+      "keyFiles": []
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "",
+      "accessCount": 16,
+      "lastAccessed": 1779574947938,
+      "type": "directory"
+    },
+    {
+      "path": "resources\\js\\router\\index.js",
+      "accessCount": 6,
+      "lastAccessed": 1779574936400,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\layouts\\AppLayout.vue",
+      "accessCount": 6,
+      "lastAccessed": 1779574943540,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\views\\auth\\ForgotPasswordView.vue",
+      "accessCount": 6,
+      "lastAccessed": 1779641059356,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\views\\scheduling\\InboundDrayVisibilityView.vue",
+      "accessCount": 5,
+      "lastAccessed": 1779496925539,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\views\\auth\\ResetPasswordView.vue",
+      "accessCount": 5,
+      "lastAccessed": 1779641071996,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\views\\tracking\\TrackingRequestView.vue",
+      "accessCount": 4,
+      "lastAccessed": 1779490330389,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js",
+      "accessCount": 4,
+      "lastAccessed": 1779506720244,
+      "type": "directory"
+    },
+    {
+      "path": "resources\\js\\views\\calendar\\CalendarView.vue",
+      "accessCount": 3,
+      "lastAccessed": 1779490356672,
+      "type": "file"
+    },
+    {
+      "path": "config\\database.php",
+      "accessCount": 3,
+      "lastAccessed": 1779506513210,
+      "type": "directory"
+    },
+    {
+      "path": "resources\\js\\plugins\\api.js",
+      "accessCount": 3,
+      "lastAccessed": 1779506739309,
+      "type": "file"
+    },
+    {
+      "path": "routes\\api.php",
+      "accessCount": 3,
+      "lastAccessed": 1779506772544,
+      "type": "directory"
+    },
+    {
+      "path": "app\\Http\\Controllers\\Api\\V1\\Auth\\AuthController.php",
+      "accessCount": 3,
+      "lastAccessed": 1779574934834,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\components\\StatCard.vue",
+      "accessCount": 3,
+      "lastAccessed": 1779641024427,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\components\\PageHeader.vue",
+      "accessCount": 3,
+      "lastAccessed": 1779641025771,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\views\\dashboard\\DashboardView.vue",
+      "accessCount": 3,
+      "lastAccessed": 1779641027113,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\components\\StatusBadge.vue",
+      "accessCount": 2,
+      "lastAccessed": 1779496734523,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\views\\containers\\ContainerListView.vue",
+      "accessCount": 2,
+      "lastAccessed": 1779496741664,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\stores\\drayage.js",
+      "accessCount": 2,
+      "lastAccessed": 1779496797443,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\views\\scheduling\\SchedulingOverviewView.vue",
+      "accessCount": 2,
+      "lastAccessed": 1779496929987,
+      "type": "file"
+    },
+    {
+      "path": "composer.json",
+      "accessCount": 2,
+      "lastAccessed": 1779503554447,
+      "type": "file"
+    },
+    {
+      "path": ".env",
+      "accessCount": 2,
+      "lastAccessed": 1779505662575,
+      "type": "file"
+    },
+    {
+      "path": "database\\migrations\\central\\2024_01_01_000005_create_subscriptions_table.php",
+      "accessCount": 2,
+      "lastAccessed": 1779506096719,
+      "type": "file"
+    },
+    {
+      "path": "routes",
+      "accessCount": 2,
+      "lastAccessed": 1779506712182,
+      "type": "directory"
+    },
+    {
+      "path": "app",
+      "accessCount": 2,
+      "lastAccessed": 1779506713077,
+      "type": "directory"
+    },
+    {
+      "path": "resources\\js\\stores\\auth.js",
+      "accessCount": 2,
+      "lastAccessed": 1779574935584,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\views\\skus\\SKUListView.vue",
+      "accessCount": 1,
+      "lastAccessed": 1779488518171,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\views\\factories\\FactoryListView.vue",
+      "accessCount": 1,
+      "lastAccessed": 1779488532063,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\views\\vendors\\VendorListView.vue",
+      "accessCount": 1,
+      "lastAccessed": 1779488545447,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\views\\NotFoundView.vue",
+      "accessCount": 1,
+      "lastAccessed": 1779488565532,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\components\\WidgetChart.vue",
+      "accessCount": 1,
+      "lastAccessed": 1779496710176,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\composables\\useApi.js",
+      "accessCount": 1,
+      "lastAccessed": 1779496727178,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\views\\containers\\ContainerDetailView.vue",
+      "accessCount": 1,
+      "lastAccessed": 1779496741936,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\views\\uploads\\CSVUploadView.vue",
+      "accessCount": 1,
+      "lastAccessed": 1779496822434,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\views\\drayage\\DrayageStepView.vue",
+      "accessCount": 1,
+      "lastAccessed": 1779496888623,
+      "type": "file"
+    },
+    {
+      "path": "public",
+      "accessCount": 1,
+      "lastAccessed": 1779496912877,
+      "type": "directory"
+    },
+    {
+      "path": "database\\migrations\\central\\2024_01_01_000004_create_plans_table.php",
+      "accessCount": 1,
+      "lastAccessed": 1779506091306,
+      "type": "file"
+    },
+    {
+      "path": "app\\Models\\Central\\User.php",
+      "accessCount": 1,
+      "lastAccessed": 1779506499242,
+      "type": "file"
+    },
+    {
+      "path": "database\\migrations\\central\\2024_01_01_000003_create_users_table.php",
+      "accessCount": 1,
+      "lastAccessed": 1779506535830,
+      "type": "file"
+    },
+    {
+      "path": "database\\migrations\\central\\2024_01_01_000001_create_tenants_table.php",
+      "accessCount": 1,
+      "lastAccessed": 1779506577525,
+      "type": "file"
+    },
+    {
+      "path": "routes\\web.php",
+      "accessCount": 1,
+      "lastAccessed": 1779506706807,
+      "type": "directory"
+    },
+    {
+      "path": "app\\Http\\Middleware\\EnsureRole.php",
+      "accessCount": 1,
+      "lastAccessed": 1779533181332,
+      "type": "file"
+    },
+    {
+      "path": "app\\Http\\Controllers\\Api\\V1\\Auth\\RegistrationController.php",
+      "accessCount": 1,
+      "lastAccessed": 1779533181414,
+      "type": "file"
+    },
+    {
+      "path": "app\\Http\\Controllers\\Api\\V1\\Admin\\OnboardingController.php",
+      "accessCount": 1,
+      "lastAccessed": 1779533181483,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\config\\navigation.js",
+      "accessCount": 1,
+      "lastAccessed": 1779574936108,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\views\\auth\\LoginView.vue",
+      "accessCount": 1,
+      "lastAccessed": 1779575094466,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\views\\auth\\RegisterView.vue",
+      "accessCount": 1,
+      "lastAccessed": 1779575094877,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\views\\carrier\\CarrierDashboardView.vue",
+      "accessCount": 1,
+      "lastAccessed": 1779575095384,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\layouts",
+      "accessCount": 1,
+      "lastAccessed": 1779641023199,
+      "type": "directory"
+    },
+    {
+      "path": "resources\\js\\views\\auth",
+      "accessCount": 1,
+      "lastAccessed": 1779641026796,
+      "type": "directory"
+    }
+  ],
+  "userDirectives": []
+}
