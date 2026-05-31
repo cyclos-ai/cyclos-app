@@ -30,6 +30,7 @@ RUN apk add --no-cache \
     libjpeg-turbo-dev \
     freetype-dev \
     libzip-dev \
+    gmp-dev \
     oniguruma-dev \
     libxml2-dev \
     supervisor \
@@ -45,6 +46,7 @@ RUN docker-php-ext-configure gd \
         bcmath \
         pcntl \
         gd \
+        gmp \
         zip \
         intl \
         opcache \
