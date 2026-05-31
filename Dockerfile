@@ -52,9 +52,11 @@ RUN docker-php-ext-configure gd \
         xml \
         exif
 
-# Install Redis extension via PECL
-RUN pecl install redis \
+# Install Redis extension via PECL (needs build deps on Alpine)
+RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
+    && pecl install redis \
     && docker-php-ext-enable redis \
+    && apk del .build-deps \
     && rm -rf /tmp/pear
 
 # Install Composer
