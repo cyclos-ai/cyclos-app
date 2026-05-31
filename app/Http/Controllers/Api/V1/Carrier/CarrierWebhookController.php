@@ -54,10 +54,11 @@ class CarrierWebhookController extends Controller
     private function validateMaerskSignature(Request $request): bool
     {
         $signature = $request->header('X-Maersk-Signature');
-        if (!$signature) return true; // Allow unsigned during development
-
         $secret = config('carriers.webhook_secrets.maersk', '');
+
+        // In production, reject unsigned requests; skip validation only if no secret is configured
         if (empty($secret)) return true;
+        if (!$signature) return false;
 
         $computed = hash_hmac('sha256', $request->getContent(), $secret);
         return hash_equals($computed, $signature);

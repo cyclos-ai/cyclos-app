@@ -14,7 +14,8 @@ return [
     'id_generator' => Stancl\Tenancy\UUIDGenerator::class,
 
     'database' => [
-        'template_tenant_connection' => 'tenant',
+        'central_connection' => 'central',
+        'template_tenant_connection' => 'tenant_template',
         'prefix' => 'tenant_',
         'suffix' => '',
         'managers' => [
@@ -67,6 +68,6 @@ return [
         Stancl\Tenancy\Bootstrappers\CacheTenancyBootstrapper::class,
         Stancl\Tenancy\Bootstrappers\FilesystemTenancyBootstrapper::class,
         Stancl\Tenancy\Bootstrappers\QueueTenancyBootstrapper::class,
-        Stancl\Tenancy\Bootstrappers\RedisTenancyBootstrapper::class,
+        // Stancl\Tenancy\Bootstrappers\RedisTenancyBootstrapper::class, // Disabled — using file cache/session
     ],
 ];

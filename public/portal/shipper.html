@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cyclos.ai — Shipper Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            teal: {
+              600: '#0d9488',
+              700: '#0f766e',
+              800: '#115e59',
+            },
+            sidebar: '#1e293b',
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    /* Skeleton loader animation */
+    @keyframes shimmer {
+      0% { background-position: -1000px 0; }
+      100% { background-position: 1000px 0; }
+    }
+    .skeleton {
+      background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+      background-size: 1000px 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 4px;
+    }
+    .sidebar-link {
+      transition: background-color 0.15s ease, color 0.15s ease;
+    }
+    .sidebar-link:hover {
+      background-color: rgba(255,255,255,0.08);
+    }
+    .sidebar-link.active {
+      background-color: #0d9488;
+      color: #ffffff;
+    }
+    /* Scrollbar styling */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen flex">
+
+  <!-- ─── SIDEBAR ───────────────────────────────────────────────── -->
+  <aside class="fixed inset-y-0 left-0 w-60 flex flex-col z-30" style="background-color:#1e293b;">
+
+    <!-- Logo / Brand -->
+    <div class="flex items-center gap-3 px-5 py-5 border-b border-white/10">
+      <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background-color:#0d9488;">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />
+        </svg>
+      </div>
+      <div>
+        <div class="text-white font-bold text-base leading-tight">Cyclos.ai</div>
+        <div class="text-slate-400 text-xs">Shipper Portal</div>
+      </div>
+    </div>
+
+    <!-- Nav Links -->
+    <nav class="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+
+      <a href="#" data-section="dashboard" class="sidebar-link active flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-200">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+        Dashboard
+      </a>
+
+      <a href="#" data-section="containers" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10"/>
+        </svg>
+        Containers
+      </a>
+
+      <a href="#" data-section="vessels" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 17h18M5 17V9l7-5 7 5v8M9 17v-5h6v5"/>
+        </svg>
+        Vessels
+      </a>
+
+      <a href="#" data-section="mbls" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        MBLs
+      </a>
+
+      <a href="#" data-section="bookings" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        Bookings
+      </a>
+
+      <a href="#" data-section="tracking" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        Tracking Requests
+      </a>
+
+      <a href="#" data-section="drayage" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+        </svg>
+        Drayage Inbound
+      </a>
+
+      <a href="#" data-section="demurrage" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        Demurrage
+      </a>
+
+      <a href="#" data-section="reports" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+        Reports
+      </a>
+
+    </nav>
+
+    <!-- Sidebar Footer -->
+    <div class="px-4 py-4 border-t border-white/10">
+      <div class="flex items-center gap-2">
+        <div class="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style="background-color:#0d9488;">DS</div>
+        <div class="min-w-0">
+          <div class="text-white text-xs font-medium truncate">Demo Shipper</div>
+          <div class="text-slate-500 text-xs truncate">shipper_admin</div>
+        </div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ─── MAIN WRAPPER ──────────────────────────────────────────── -->
+  <div class="flex-1 flex flex-col ml-60 min-h-screen">
+
+    <!-- ─── HEADER ─────────────────────────────────────────────── -->
+    <header class="sticky top-0 z-20 bg-white border-b border-slate-200 shadow-sm">
+      <div class="flex items-center justify-between px-6 py-3">
+
+        <!-- Left: Title + login indicator -->
+        <div class="flex items-center gap-3">
+          <h1 class="text-slate-800 font-semibold text-lg">Cyclos.ai — Shipper Portal</h1>
+          <span id="auth-indicator" class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+            Connecting…
+          </span>
+        </div>
+
+        <!-- Right: user info + full app link -->
+        <div class="flex items-center gap-4">
+          <div class="text-right hidden sm:block">
+            <div class="text-slate-700 text-sm font-medium">Demo Shipper</div>
+            <div class="text-slate-400 text-xs">shipper_admin</div>
+          </div>
+          <a href="http://demo.localhost:8000/" target="_blank"
+             class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-white transition-colors hover:opacity-90"
+             style="background-color:#0d9488;">
+            Open Full App
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+            </svg>
+          </a>
+        </div>
+
+      </div>
+
+      <!-- Error Banner -->
+      <div id="error-banner" class="hidden px-6 py-2 bg-red-50 border-t border-red-200 flex items-center gap-2 text-sm text-red-700">
+        <svg class="w-4 h-4 flex-shrink-0 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/>
+        </svg>
+        <span id="error-message">An error occurred.</span>
+      </div>
+    </header>
+
+    <!-- ─── CONTENT AREA ──────────────────────────────────────── -->
+    <main class="flex-1 px-6 py-6 overflow-auto">
+
+      <!-- Page header -->
+      <div class="mb-6">
+        <h2 class="text-2xl font-bold text-slate-800">Dashboard</h2>
+        <p class="text-slate-500 text-sm mt-0.5">Container lifecycle overview for your account</p>
+      </div>
+
+      <!-- ─── STATS CARDS ────────────────────────────────────── -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+
+        <!-- Total Containers -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="text-slate-500 text-xs font-medium uppercase tracking-wide mb-1">Total Containers</p>
+              <div id="stat-total" class="skeleton h-8 w-20 mt-1">&nbsp;</div>
+            </div>
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style="background-color:#ccfbf1;">
+              <svg class="w-5 h-5" style="color:#0d9488;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Active Shipments -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="text-slate-500 text-xs font-medium uppercase tracking-wide mb-1">Active Shipments</p>
+              <div id="stat-active" class="skeleton h-8 w-20 mt-1">&nbsp;</div>
+            </div>
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style="background-color:#dbeafe;">
+              <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- At Terminal -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="text-slate-500 text-xs font-medium uppercase tracking-wide mb-1">At Terminal</p>
+              <div id="stat-terminal" class="skeleton h-8 w-20 mt-1">&nbsp;</div>
+            </div>
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-amber-50">
+              <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- ETA Today -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="text-slate-500 text-xs font-medium uppercase tracking-wide mb-1">ETA Today</p>
+              <div id="stat-eta" class="skeleton h-8 w-20 mt-1">&nbsp;</div>
+            </div>
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-emerald-50">
+              <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ─── TWO COLUMN: TABLE + QUICK ACTIONS ─────────────── -->
+      <div class="flex flex-col xl:flex-row gap-5">
+
+        <!-- Containers Table -->
+        <div class="flex-1 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+            <div>
+              <h3 class="font-semibold text-slate-800 text-sm">Recent Containers</h3>
+              <p class="text-slate-400 text-xs mt-0.5">Latest 10 containers in your account</p>
+            </div>
+            <a href="http://demo.localhost:8000/containers" target="_blank"
+               class="text-xs font-medium hover:underline" style="color:#0d9488;">View all →</a>
+          </div>
+
+          <!-- Table wrapper -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-100">
+                  <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Container #</th>
+                  <th class="text-left px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">MBL</th>
+                  <th class="text-left px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
+                  <th class="text-left px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Carrier</th>
+                  <th class="text-left px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Route</th>
+                  <th class="text-left px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">ETA</th>
+                </tr>
+              </thead>
+              <tbody id="containers-tbody">
+                <!-- Skeleton rows -->
+                <tr class="border-b border-slate-50" id="skeleton-row-template">
+                  <td class="px-5 py-3.5"><div class="skeleton h-4 w-28">&nbsp;</div></td>
+                  <td class="px-3 py-3.5"><div class="skeleton h-4 w-24">&nbsp;</div></td>
+                  <td class="px-3 py-3.5"><div class="skeleton h-5 w-20 rounded-full">&nbsp;</div></td>
+                  <td class="px-3 py-3.5"><div class="skeleton h-4 w-16">&nbsp;</div></td>
+                  <td class="px-3 py-3.5"><div class="skeleton h-4 w-24">&nbsp;</div></td>
+                  <td class="px-3 py-3.5"><div class="skeleton h-4 w-20">&nbsp;</div></td>
+                </tr>
+                <tr class="border-b border-slate-50">
+                  <td class="px-5 py-3.5"><div class="skeleton h-4 w-28">&nbsp;</div></td>
+                  <td class="px-3 py-3.5"><div class="skeleton h-4 w-24">&nbsp;</div></td>
+                  <td class="px-3 py-3.5"><div class="skeleton h-5 w-20 rounded-full">&nbsp;</div></td>
+                  <td class="px-3 py-3.5"><div class="skeleton h-4 w-16">&nbsp;</div></td>
+                  <td class="px-3 py-3.5"><div class="skeleton h-4 w-24">&nbsp;</div></td>
+                  <td class="px-3 py-3.5"><div class="skeleton h-4 w-20">&nbsp;</div></td>
+                </tr>
+                <tr class="border-b border-slate-50">
+                  <td class="px-5 py-3.5"><div class="skeleton h-4 w-28">&nbsp;</div></td>
+                  <td class="px-3 py-3.5"><div class="skeleton h-4 w-24">&nbsp;</div></td>
+                  <td class="px-3 py-3.5"><div class="skeleton h-5 w-20 rounded-full">&nbsp;</div></td>
+                  <td class="px-3 py-3.5"><div class="skeleton h-4 w-16">&nbsp;</div></td>
+                  <td class="px-3 py-3.5"><div class="skeleton h-4 w-24">&nbsp;</div></td>
+                  <td class="px-3 py-3.5"><div class="skeleton h-4 w-20">&nbsp;</div></td>
+                </tr>
+                <tr class="border-b border-slate-50">
+                  <td class="px-5 py-3.5"><div class="skeleton h-4 w-28">&nbsp;</div></td>
+                  <td class="px-3 py-3.5"><div class="skeleton h-4 w-24">&nbsp;</div></td>
+                  <td class="px-3 py-3.5"><div class="skeleton h-5 w-20 rounded-full">&nbsp;</div></td>
+                  <td class="px-3 py-3.5"><div class="skeleton h-4 w-16">&nbsp;</div></td>
+                  <td class="px-3 py-3.5"><div class="skeleton h-4 w-24">&nbsp;</div></td>
+                  <td class="px-3 py-3.5"><div class="skeleton h-4 w-20">&nbsp;</div></td>
+                </tr>
+                <tr>
+                  <td class="px-5 py-3.5"><div class="skeleton h-4 w-28">&nbsp;</div></td>
+                  <td class="px-3 py-3.5"><div class="skeleton h-4 w-24">&nbsp;</div></td>
+                  <td class="px-3 py-3.5"><div class="skeleton h-5 w-20 rounded-full">&nbsp;</div></td>
+                  <td class="px-3 py-3.5"><div class="skeleton h-4 w-16">&nbsp;</div></td>
+                  <td class="px-3 py-3.5"><div class="skeleton h-4 w-24">&nbsp;</div></td>
+                  <td class="px-3 py-3.5"><div class="skeleton h-4 w-20">&nbsp;</div></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Empty state (hidden by default) -->
+          <div id="containers-empty" class="hidden py-12 text-center">
+            <svg class="w-10 h-10 mx-auto text-slate-300 mb-3" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10"/>
+            </svg>
+            <p class="text-slate-400 text-sm">No containers found</p>
+          </div>
+        </div>
+
+        <!-- Quick Actions Panel -->
+        <div class="xl:w-72 flex flex-col gap-4">
+
+          <!-- Quick Actions Card -->
+          <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-100">
+              <h3 class="font-semibold text-slate-800 text-sm">Quick Actions</h3>
+              <p class="text-slate-400 text-xs mt-0.5">Common tasks and shortcuts</p>
+            </div>
+            <div class="p-4 space-y-2.5">
+
+              <a href="http://demo.localhost:8000/tracking-requests/new" target="_blank"
+                 class="flex items-center gap-3 w-full px-4 py-3 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors group">
+                <div class="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 group-hover:opacity-80 transition-opacity" style="background-color:#ccfbf1;">
+                  <svg class="w-4 h-4" style="color:#0d9488;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                  </svg>
+                </div>
+                <div class="min-w-0">
+                  <div class="font-medium text-slate-700">New Tracking Request</div>
+                  <div class="text-xs text-slate-400 truncate">Add containers to track</div>
+                </div>
+                <svg class="w-3.5 h-3.5 text-slate-300 ml-auto flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                </svg>
+              </a>
+
+              <a href="http://demo.localhost:8000/containers" target="_blank"
+                 class="flex items-center gap-3 w-full px-4 py-3 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors group">
+                <div class="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 bg-blue-50 group-hover:opacity-80 transition-opacity">
+                  <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                  </svg>
+                </div>
+                <div class="min-w-0">
+                  <div class="font-medium text-slate-700">View All Containers</div>
+                  <div class="text-xs text-slate-400 truncate">Browse full container list</div>
+                </div>
+                <svg class="w-3.5 h-3.5 text-slate-300 ml-auto flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                </svg>
+              </a>
+
+              <button onclick="handleExport()"
+                 class="flex items-center gap-3 w-full px-4 py-3 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors group">
+                <div class="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 bg-violet-50 group-hover:opacity-80 transition-opacity">
+                  <svg class="w-4 h-4 text-violet-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                  </svg>
+                </div>
+                <div class="min-w-0 text-left">
+                  <div class="font-medium text-slate-700">Export Data</div>
+                  <div class="text-xs text-slate-400 truncate">Download container report</div>
+                </div>
+                <svg class="w-3.5 h-3.5 text-slate-300 ml-auto flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                </svg>
+              </button>
+
+            </div>
+          </div>
+
+          <!-- Status Legend Card -->
+          <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-100">
+              <h3 class="font-semibold text-slate-800 text-sm">Status Legend</h3>
+            </div>
+            <div class="p-4 space-y-2">
+              <div class="flex items-center gap-2.5">
+                <span class="inline-block w-2.5 h-2.5 rounded-full bg-blue-500 flex-shrink-0"></span>
+                <span class="text-xs text-slate-600">On Water — In transit at sea</span>
+              </div>
+              <div class="flex items-center gap-2.5">
+                <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-500 flex-shrink-0"></span>
+                <span class="text-xs text-slate-600">At Terminal — Arrived, awaiting pickup</span>
+              </div>
+              <div class="flex items-center gap-2.5">
+                <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 flex-shrink-0"></span>
+                <span class="text-xs text-slate-600">Delivered — Final delivery complete</span>
+              </div>
+              <div class="flex items-center gap-2.5">
+                <span class="inline-block w-2.5 h-2.5 rounded-full bg-slate-400 flex-shrink-0"></span>
+                <span class="text-xs text-slate-600">Not Tracking — No live data</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Account Summary Card -->
+          <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-100">
+              <h3 class="font-semibold text-slate-800 text-sm">Account</h3>
+            </div>
+            <div class="p-4 space-y-2.5">
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-slate-500">Email</span>
+                <span class="text-xs font-medium text-slate-700">shipper@cyclos.ai</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-slate-500">Role</span>
+                <span class="text-xs font-medium text-slate-700">shipper_admin</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-slate-500">Session</span>
+                <span id="session-age" class="text-xs font-medium text-slate-700">—</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ─── PLACEHOLDER SECTIONS (hidden, shown on nav click) ─ -->
+      <div id="section-placeholder" class="hidden mt-6 bg-white rounded-xl border border-slate-200 shadow-sm p-12 text-center">
+        <svg class="w-12 h-12 mx-auto text-slate-200 mb-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
+        </svg>
+        <h3 id="placeholder-title" class="text-slate-600 font-semibold text-lg mb-1">Section</h3>
+        <p class="text-slate-400 text-sm">This section is available in the full app.</p>
+        <a href="http://demo.localhost:8000/" target="_blank"
+           class="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors hover:opacity-90"
+           style="background-color:#0d9488;">
+          Open Full App →
+        </a>
+      </div>
+
+    </main>
+
+    <!-- ─── FOOTER ─────────────────────────────────────────────── -->
+    <footer class="border-t border-slate-200 bg-white px-6 py-3 flex items-center justify-between text-xs text-slate-400">
+      <span>Powered by <strong class="text-slate-600">Cyclos.ai</strong> — Container Lifecycle Management &copy; <span id="footer-year"></span></span>
+      <div class="flex items-center gap-2">
+        <span>API:</span>
+        <span id="api-status" class="inline-flex items-center gap-1.5 font-medium text-slate-500">
+          <span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+          Checking…
+        </span>
+      </div>
+    </footer>
+
+  </div><!-- /main wrapper -->
+
+
+  <!-- ─── JAVASCRIPT ──────────────────────────────────────────────── -->
+  <script>
+    // ── State ──────────────────────────────────────────────────────
+    const state = {
+      token: null,
+      loginTime: null,
+    };
+
+    const BASE_URL = '/api/v1';
+
+    // ── Helpers ────────────────────────────────────────────────────
+    function el(id) { return document.getElementById(id); }
+
+    function setAuthIndicator(status) {
+      const ind = el('auth-indicator');
+      const dot = ind.querySelector('span');
+      const map = {
+        connecting: ['bg-amber-100 text-amber-700', 'bg-amber-500 animate-pulse', 'Connecting…'],
+        authenticated: ['bg-emerald-100 text-emerald-700', 'bg-emerald-500', 'Authenticated'],
+        error: ['bg-red-100 text-red-700', 'bg-red-500', 'Auth Failed'],
+      };
+      const [cls, dotCls, text] = map[status];
+      ind.className = `inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${cls}`;
+      dot.className = `w-1.5 h-1.5 rounded-full ${dotCls}`;
+      ind.childNodes[1].textContent = text;
+    }
+
+    function setApiStatus(ok) {
+      const s = el('api-status');
+      if (ok) {
+        s.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Online';
+        s.className = 'inline-flex items-center gap-1.5 font-medium text-emerald-600';
+      } else {
+        s.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Offline';
+        s.className = 'inline-flex items-center gap-1.5 font-medium text-red-600';
+      }
+    }
+
+    function showError(msg) {
+      const banner = el('error-banner');
+      el('error-message').textContent = msg;
+      banner.classList.remove('hidden');
+      setTimeout(() => banner.classList.add('hidden'), 8000);
+    }
+
+    function setStat(id, value) {
+      const elem = el(id);
+      elem.classList.remove('skeleton');
+      elem.style.height = '';
+      elem.style.width = '';
+      elem.className = 'text-3xl font-bold text-slate-800 mt-1';
+      elem.textContent = value !== null && value !== undefined ? String(value) : '—';
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '—';
+      try {
+        const d = new Date(dateStr);
+        if (isNaN(d)) return '—';
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      } catch { return '—'; }
+    }
+
+    function isToday(dateStr) {
+      if (!dateStr) return false;
+      try {
+        const d = new Date(dateStr);
+        const now = new Date();
+        return d.getFullYear() === now.getFullYear() &&
+               d.getMonth() === now.getMonth() &&
+               d.getDate() === now.getDate();
+      } catch { return false; }
+    }
+
+    function statusBadge(status) {
+      const map = {
+        ON_WATER:     ['bg-blue-100 text-blue-700',   'On Water'],
+        AT_TERMINAL:  ['bg-amber-100 text-amber-700',  'At Terminal'],
+        DELIVERED:    ['bg-emerald-100 text-emerald-700', 'Delivered'],
+        NOT_TRACKING: ['bg-slate-100 text-slate-500',  'Not Tracking'],
+      };
+      const [cls, label] = map[status] || ['bg-slate-100 text-slate-500', status || '—'];
+      return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${cls}">${label}</span>`;
+    }
+
+    // ── API calls ──────────────────────────────────────────────────
+    async function apiFetch(path, opts = {}) {
+      const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Tenant': 'demo' };
+      if (state.token) headers['Authorization'] = `Bearer ${state.token}`;
+      const res = await fetch(`${BASE_URL}${path}`, { ...opts, headers });
+      if (!res.ok) throw new Error(`HTTP ${res.status} on ${path}`);
+      return res.json();
+    }
+
+    // ── Login ──────────────────────────────────────────────────────
+    async function login() {
+      setAuthIndicator('connecting');
+      try {
+        const data = await apiFetch('/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({ email: 'shipper@cyclos.ai', password: 'password' }),
+        });
+        // Support common token field names
+        state.token = data.token || data.access_token || data.data?.token || null;
+        if (!state.token) throw new Error('No token in response');
+        state.loginTime = new Date();
+        setAuthIndicator('authenticated');
+        setApiStatus(true);
+        startSessionClock();
+        return true;
+      } catch (err) {
+        setAuthIndicator('error');
+        setApiStatus(false);
+        showError(`Login failed: ${err.message}. Attempting to load data anyway…`);
+        // Still try to load data (API may be public or token may be optional)
+        return false;
+      }
+    }
+
+    // ── Session clock ──────────────────────────────────────────────
+    function startSessionClock() {
+      function tick() {
+        if (!state.loginTime) return;
+        const diffMs = Date.now() - state.loginTime.getTime();
+        const mins = Math.floor(diffMs / 60000);
+        const secs = Math.floor((diffMs % 60000) / 1000);
+        el('session-age').textContent = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+      }
+      tick();
+      setInterval(tick, 1000);
+    }
+
+    // ── Load Stats ─────────────────────────────────────────────────
+    async function loadStats(containers) {
+      // Total containers
+      try {
+        const res = await apiFetch('/containers?page_size=1');
+        setStat('stat-total', res?.meta?.total ?? '—');
+      } catch {
+        setStat('stat-total', '—');
+      }
+
+      // Active shipments
+      try {
+        const res = await apiFetch('/containers/active?page_size=1');
+        setStat('stat-active', res?.meta?.total ?? '—');
+      } catch {
+        setStat('stat-active', '—');
+      }
+
+      // At Terminal + ETA Today — derive from the containers we already loaded
+      if (containers && Array.isArray(containers)) {
+        const atTerminal = containers.filter(c => c.status === 'AT_TERMINAL').length;
+        const etaToday   = containers.filter(c => isToday(c.eta || c.estimated_arrival)).length;
+        setStat('stat-terminal', atTerminal > 0 ? atTerminal : '—');
+        setStat('stat-eta', etaToday > 0 ? etaToday : '—');
+      } else {
+        setStat('stat-terminal', '—');
+        setStat('stat-eta', '—');
+      }
+    }
+
+    // ── Load Containers Table ──────────────────────────────────────
+    async function loadContainers() {
+      let containers = null;
+      try {
+        const res = await apiFetch('/containers?page_num=0&page_size=10&order_by=created_at&direction=-1');
+        containers = res?.data || res?.containers || res?.items || (Array.isArray(res) ? res : null);
+
+        const tbody = el('containers-tbody');
+
+        if (!containers || containers.length === 0) {
+          tbody.innerHTML = '';
+          el('containers-empty').classList.remove('hidden');
+          return null;
+        }
+
+        tbody.innerHTML = containers.map((c, i) => {
+          const num    = c.container_number || c.number || c.id || '—';
+          const mbl    = c.mbl_number || (typeof c.mbl === 'string' ? c.mbl : null) || c.master_bill_of_lading || '—';
+          const status = c.status || 'NOT_TRACKING';
+          const carrier = c.carrier || c.shipping_line || '—';
+          const pol    = c.pol || c.port_of_loading || '—';
+          const pod    = c.pod || c.port_of_discharge || '—';
+          const eta    = formatDate(c.eta || c.estimated_arrival);
+          const rowBg  = i % 2 === 0 ? '' : 'bg-slate-50/50';
+
+          return `
+            <tr class="border-b border-slate-50 hover:bg-slate-50 transition-colors ${rowBg}">
+              <td class="px-5 py-3 font-mono text-xs font-semibold text-slate-700">${num}</td>
+              <td class="px-3 py-3 font-mono text-xs text-slate-600">${mbl}</td>
+              <td class="px-3 py-3">${statusBadge(status)}</td>
+              <td class="px-3 py-3 text-xs text-slate-600">${carrier}</td>
+              <td class="px-3 py-3 text-xs text-slate-600">
+                <span class="text-slate-500">${pol}</span>
+                <span class="text-slate-300 mx-1">→</span>
+                <span>${pod}</span>
+              </td>
+              <td class="px-3 py-3 text-xs text-slate-600">${eta}</td>
+            </tr>`;
+        }).join('');
+
+        return containers;
+      } catch (err) {
+        const tbody = el('containers-tbody');
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="px-5 py-8 text-center text-sm text-slate-400">
+              Failed to load containers: ${err.message}
+            </td>
+          </tr>`;
+        return null;
+      }
+    }
+
+    // ── Export placeholder ─────────────────────────────────────────
+    function handleExport() {
+      const banner = el('error-banner');
+      el('error-message').textContent = 'Export feature is available in the full app at demo.localhost:8000';
+      banner.style.cssText = '';  // reset to default styling
+      banner.classList.remove('hidden');
+      setTimeout(() => banner.classList.add('hidden'), 4000);
+    }
+
+    // ── Sidebar nav ────────────────────────────────────────────────
+    function initNav() {
+      const sectionNames = {
+        dashboard: 'Dashboard',
+        containers: 'Containers',
+        vessels: 'Vessels',
+        mbls: 'MBLs',
+        bookings: 'Bookings',
+        tracking: 'Tracking Requests',
+        drayage: 'Drayage Inbound',
+        demurrage: 'Demurrage',
+        reports: 'Reports',
+      };
+
+      const dashboardContent = document.querySelector('main > .mb-6');
+      const statsRow = document.querySelector('.grid');
+      const tableRow = document.querySelector('.flex.flex-col.xl\\:flex-row');
+      const placeholder = el('section-placeholder');
+
+      document.querySelectorAll('.sidebar-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          const section = link.dataset.section;
+
+          // Update active state
+          document.querySelectorAll('.sidebar-link').forEach(l => {
+            l.classList.remove('active');
+            l.classList.add('text-slate-400');
+            l.classList.remove('text-slate-200');
+          });
+          link.classList.add('active');
+          link.classList.remove('text-slate-400');
+          link.classList.add('text-slate-200');
+
+          if (section === 'dashboard') {
+            dashboardContent.classList.remove('hidden');
+            statsRow.classList.remove('hidden');
+            tableRow.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+          } else {
+            dashboardContent.classList.add('hidden');
+            statsRow.classList.add('hidden');
+            tableRow.classList.add('hidden');
+            placeholder.classList.remove('hidden');
+            el('placeholder-title').textContent = sectionNames[section] || 'Section';
+          }
+        });
+      });
+    }
+
+    // ── Footer year ────────────────────────────────────────────────
+    el('footer-year').textContent = new Date().getFullYear();
+
+    // ── Boot ───────────────────────────────────────────────────────
+    async function boot() {
+      initNav();
+
+      // Login first
+      await login();
+
+      // Load containers, then use them for stats (avoids redundant request)
+      const containers = await loadContainers();
+      await loadStats(containers);
+    }
+
+    boot();
+  </script>
+
+</body>
+</html>

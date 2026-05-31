@@ -27,8 +27,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->foreign('organization_id')->references('id')->on('organizations')->cascadeOnDelete();
-            $table->foreign('vendor_id')->references('id')->on('vendors')->nullOnDelete();
-            $table->foreign('factory_id')->references('id')->on('factories')->nullOnDelete();
+            // Foreign keys to vendors, factories deferred — see 100045_add_deferred_foreign_keys.php
         });
     }
 

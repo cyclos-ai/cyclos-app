@@ -63,6 +63,157 @@
                 </div>
             </TabPanel>
 
+            <!-- Live Tracking -->
+            <TabPanel header="Live Tracking">
+                <div class="pt-4">
+                    <!-- Not configured -->
+                    <div v-if="!jsonCargoStore.configured && !trackingLoading && !trackingData" class="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-xl text-sm text-blue-800">
+                        <i class="pi pi-info-circle text-blue-500 mt-0.5 flex-shrink-0"></i>
+                        <div>
+                            <p class="font-medium">JSONCargo is not configured</p>
+                            <p class="mt-0.5 text-blue-700">Set up your JSONCargo API key in
+                                <router-link to="/settings/integrations" class="underline hover:text-blue-900">Integrations</router-link>
+                                to enable live container tracking.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Loading skeleton -->
+                    <div v-else-if="trackingLoading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div v-for="n in 8" :key="n" class="rounded-xl border border-gray-100 bg-white p-4 space-y-2">
+                            <Skeleton width="50%" height="0.75rem" />
+                            <Skeleton width="80%" height="1rem" />
+                            <Skeleton width="60%" height="0.875rem" />
+                        </div>
+                    </div>
+
+                    <!-- Container not found (404) -->
+                    <div v-else-if="trackingNotFound" class="flex items-start gap-3 p-4 bg-yellow-50 border border-yellow-200 rounded-xl text-sm text-yellow-800">
+                        <i class="pi pi-exclamation-triangle text-yellow-500 mt-0.5 flex-shrink-0"></i>
+                        <div>
+                            <p class="font-medium">Container not found in live tracking</p>
+                            <p class="mt-0.5 text-yellow-700">No live data is available for <span class="font-mono">{{ container.container_number }}</span>. The container may not yet be in the carrier's tracking system.</p>
+                        </div>
+                    </div>
+
+                    <!-- Tracking error (other) -->
+                    <div v-else-if="trackingError && !trackingNotFound" class="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-800">
+                        <i class="pi pi-times-circle text-red-500 mt-0.5 flex-shrink-0"></i>
+                        <div>
+                            <p class="font-medium">Tracking unavailable</p>
+                            <p class="mt-0.5 text-red-700">{{ trackingError }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Tracking data -->
+                    <div v-else-if="trackingData">
+                        <!-- Refresh button + last updated -->
+                        <div class="flex items-center justify-between mb-4">
+                            <p v-if="trackingData.last_updated" class="text-xs text-gray-400">
+                                <i class="pi pi-clock mr-1"></i>Last updated {{ formatDateTime(trackingData.last_updated) }}
+                            </p>
+                            <span v-else></span>
+                            <Button
+                                label="Refresh Tracking"
+                                icon="pi pi-refresh"
+                                outlined
+                                size="small"
+                                :loading="trackingLoading"
+                                @click="handleRefreshTracking"
+                            />
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <!-- Status -->
+                            <div class="rounded-xl border border-gray-100 bg-white p-4 space-y-2">
+                                <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i class="pi pi-tag text-gray-300"></i> Status
+                                </h4>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <span :class="['inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold', trackingStatusClass]">
+                                        {{ trackingData.container_status || '—' }}
+                                    </span>
+                                </div>
+                                <p v-if="trackingData.shipping_line_name" class="text-sm text-gray-600">{{ trackingData.shipping_line_name }}</p>
+                            </div>
+
+                            <!-- Current Location -->
+                            <div class="rounded-xl border border-gray-100 bg-white p-4 space-y-2">
+                                <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i class="pi pi-map-marker text-gray-300"></i> Current Location
+                                </h4>
+                                <p class="text-sm font-medium text-gray-800">{{ trackingData.last_location || '—' }}</p>
+                                <p v-if="trackingData.last_location_terminal" class="text-xs text-gray-500">{{ trackingData.last_location_terminal }}</p>
+                                <p v-if="trackingData.last_movement_timestamp" class="text-xs text-gray-400 mt-1">
+                                    <i class="pi pi-clock mr-1"></i>{{ formatDateTime(trackingData.last_movement_timestamp) }}
+                                </p>
+                            </div>
+
+                            <!-- Next Destination -->
+                            <div class="rounded-xl border border-gray-100 bg-white p-4 space-y-2">
+                                <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i class="pi pi-arrow-right text-gray-300"></i> Next Destination
+                                </h4>
+                                <p class="text-sm font-medium text-gray-800">{{ trackingData.next_location || '—' }}</p>
+                                <p v-if="trackingData.next_location_terminal" class="text-xs text-gray-500">{{ trackingData.next_location_terminal }}</p>
+                            </div>
+
+                            <!-- Vessel -->
+                            <div class="rounded-xl border border-gray-100 bg-white p-4 space-y-2">
+                                <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i class="pi pi-send text-gray-300"></i> Vessel
+                                </h4>
+                                <p class="text-sm font-medium text-gray-800">{{ trackingData.current_vessel_name || '—' }}</p>
+                                <p v-if="trackingData.current_voyage_number" class="text-xs text-gray-500">Voyage {{ trackingData.current_voyage_number }}</p>
+                            </div>
+
+                            <!-- Route -->
+                            <div class="rounded-xl border border-gray-100 bg-white p-4 space-y-2">
+                                <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i class="pi pi-share-alt text-gray-300"></i> Route
+                                </h4>
+                                <div class="flex items-center gap-2 text-sm">
+                                    <div class="text-center">
+                                        <p class="font-medium text-gray-800">{{ trackingData.loading_port || trackingData.shipped_from || '—' }}</p>
+                                        <p class="text-xs text-gray-400">Origin</p>
+                                    </div>
+                                    <i class="pi pi-arrow-right text-gray-300 flex-shrink-0"></i>
+                                    <div class="text-center">
+                                        <p class="font-medium text-gray-800">{{ trackingData.discharging_port || trackingData.shipped_to || '—' }}</p>
+                                        <p class="text-xs text-gray-400">Destination</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Dates -->
+                            <div class="rounded-xl border border-gray-100 bg-white p-4 space-y-2">
+                                <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i class="pi pi-calendar text-gray-300"></i> Dates
+                                </h4>
+                                <div class="space-y-1.5 text-sm">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-500 text-xs">ATD Origin</span>
+                                        <span class="font-medium text-xs">{{ trackingData.atd_origin ? formatDate(trackingData.atd_origin) : '—' }}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-500 text-xs">ETA Final</span>
+                                        <span class="font-medium text-xs">{{ trackingData.eta_final_destination ? formatDate(trackingData.eta_final_destination) : '—' }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Bill of Lading -->
+                            <div v-if="trackingData.bill_of_lading" class="rounded-xl border border-gray-100 bg-white p-4 space-y-2">
+                                <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i class="pi pi-file text-gray-300"></i> Bill of Lading
+                                </h4>
+                                <p class="text-sm font-mono font-medium text-gray-800">{{ trackingData.bill_of_lading }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </TabPanel>
+
             <!-- Timeline -->
             <TabPanel header="Timeline">
                 <div class="pt-4 max-w-2xl">
@@ -220,10 +371,12 @@ import Button from 'primevue/button';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
 import ProgressSpinner from 'primevue/progressspinner';
+import Skeleton from 'primevue/skeleton';
 import dayjs from 'dayjs';
 import StatusBadge from '@/components/StatusBadge.vue';
 import ContainerTimeline from '@/components/ContainerTimeline.vue';
 import { useContainersStore } from '@/stores/containers';
+import { useJsonCargoStore } from '@/stores/jsonCargo';
 
 // Inline DetailRow component
 const DetailRow = {
@@ -242,10 +395,74 @@ const router = useRouter();
 const confirm = useConfirm();
 const toast = useToast();
 const containersStore = useContainersStore();
+const jsonCargoStore = useJsonCargoStore();
 
 const loading = ref(false);
 const showEdit = ref(false);
 const activeTab = ref(0);
+
+// Live Tracking state
+const trackingData = ref(null);
+const trackingLoading = ref(false);
+const trackingNotFound = ref(false);
+const trackingError = ref(null);
+
+const trackingStatusClass = computed(() => {
+    const status = trackingData.value?.container_status?.toLowerCase() ?? '';
+    if (status.includes('discharg') || status.includes('arrived') || status.includes('delivered')) {
+        return 'bg-green-100 text-green-800';
+    }
+    if (status.includes('transit') || status.includes('vessel') || status.includes('sailed')) {
+        return 'bg-blue-100 text-blue-800';
+    }
+    if (status.includes('gate') || status.includes('pickup') || status.includes('out')) {
+        return 'bg-purple-100 text-purple-800';
+    }
+    if (status.includes('delay') || status.includes('hold')) {
+        return 'bg-red-100 text-red-800';
+    }
+    return 'bg-gray-100 text-gray-700';
+});
+
+async function fetchTracking() {
+    trackingLoading.value = true;
+    trackingNotFound.value = false;
+    trackingError.value = null;
+    try {
+        await jsonCargoStore.fetchStatus();
+        if (!jsonCargoStore.configured) return;
+        const num = container.value.container_number;
+        const shippingLine = jsonCargoStore.resolveShippingLine(container.value.scac) ?? null;
+        trackingData.value = await jsonCargoStore.trackContainer(num, shippingLine);
+    } catch (err) {
+        if (err.response?.status === 404) {
+            trackingNotFound.value = true;
+        } else {
+            trackingError.value = err.response?.data?.message || 'Live tracking unavailable';
+        }
+    } finally {
+        trackingLoading.value = false;
+    }
+}
+
+async function handleRefreshTracking() {
+    trackingLoading.value = true;
+    trackingNotFound.value = false;
+    trackingError.value = null;
+    try {
+        const num = container.value.container_number;
+        const shippingLine = jsonCargoStore.resolveShippingLine(container.value.scac) ?? null;
+        trackingData.value = await jsonCargoStore.refreshContainer(num, shippingLine);
+    } catch (err) {
+        if (err.response?.status === 404) {
+            trackingNotFound.value = true;
+        } else {
+            trackingError.value = err.response?.data?.message || 'Refresh failed';
+        }
+    } finally {
+        trackingLoading.value = false;
+    }
+}
 
 const container = computed(() => containersStore.currentContainer);
 
@@ -292,5 +509,7 @@ onMounted(async () => {
     } finally {
         loading.value = false;
     }
+    // Kick off live tracking in parallel (non-blocking for tab display)
+    fetchTracking();
 });
 </script>

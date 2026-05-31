@@ -7,6 +7,7 @@ use App\Models\Central\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
@@ -48,8 +49,9 @@ class AuthController extends Controller
         // Generate a simple token and store it
         $token = Str::random(64);
         $user->forceFill([
-            'remember_token' => hash('sha256', $token),
-            'last_login_at'  => now(),
+            'remember_token'   => hash('sha256', $token),
+            'token_created_at' => now(),
+            'last_login_at'    => now(),
         ])->save();
 
         return response()->json([
@@ -150,5 +152,60 @@ class AuthController extends Controller
         } catch (\Exception $e) {
             return response()->json(['message' => 'Failed to generate token: ' . $e->getMessage()], 500);
         }
+    }
+
+    /**
+     * POST /api/v1/auth/forgot-password
+     * Send a password reset link to the given email.
+     * Always returns success to prevent email enumeration.
+     */
+    public function forgotPassword(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['message' => 'Validation failed', 'errors' => $validator->errors()], 422);
+        }
+
+        Password::broker('users')->sendResetLink(
+            $request->only('email')
+        );
+
+        return response()->json(['message' => 'If that email is registered, a password reset link has been sent.']);
+    }
+
+    /**
+     * POST /api/v1/auth/reset-password
+     * Reset the user's password using the token from the reset email.
+     */
+    public function resetPassword(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'token'                 => 'required|string',
+            'email'                 => 'required|email',
+            'password'              => 'required|string|min:8|confirmed',
+            'password_confirmation' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['message' => 'Validation failed', 'errors' => $validator->errors()], 422);
+        }
+
+        $status = Password::broker('users')->reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function (User $user, string $password) {
+                $user->forceFill([
+                    'password' => Hash::make($password),
+                ])->save();
+            }
+        );
+
+        if ($status !== Password::PASSWORD_RESET) {
+            return response()->json(['message' => __($status)], 422);
+        }
+
+        return response()->json(['message' => 'Password has been reset successfully.']);
     }
 }

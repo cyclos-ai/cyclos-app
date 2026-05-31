@@ -95,6 +95,7 @@
             data-key="uuid"
             paginator
             :rows="pageSize"
+            :first="(currentPage - 1) * pageSize"
             :total-records="containersStore.totalContainers"
             :rows-per-page-options="[10, 25, 50, 100]"
             lazy
@@ -143,9 +144,9 @@
                 </template>
             </Column>
 
-            <Column field="carrier_name" header="Carrier" sortable>
+            <Column field="shipping_line" header="Carrier" sortable>
                 <template #body="{ data }">
-                    <span class="text-sm">{{ data.carrier_name || data.scac || '—' }}</span>
+                    <span class="text-sm">{{ data.shipping_line || data.carrier_scac || '—' }}</span>
                 </template>
             </Column>
 
@@ -323,10 +324,10 @@ function clearFilters() {
 
 async function loadContainers() {
     await containersStore.fetchContainers({
-        page: currentPage.value,
-        per_page: pageSize.value,
-        sort: sortField.value,
-        direction: sortOrder.value === 1 ? 'asc' : 'desc',
+        page_num: currentPage.value - 1,
+        page_size: pageSize.value,
+        order_by: sortField.value,
+        direction: sortOrder.value === 1 ? 1 : -1,
     });
 }
 

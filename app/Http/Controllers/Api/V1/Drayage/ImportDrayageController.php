@@ -14,7 +14,7 @@ class ImportDrayageController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = ImportDrayage::query();
+        $query = ImportDrayage::with('container:id,container_number');
 
         if ($request->has('filters')) {
             $this->applyFilters($query, $request->input('filters', []));

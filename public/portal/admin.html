@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cyclos.ai — Admin Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            sidebar: '#0f172a',
+            brand: {
+              50:  '#f5f3ff',
+              100: '#ede9fe',
+              200: '#ddd6fe',
+              300: '#c4b5fd',
+              400: '#a78bfa',
+              500: '#8b5cf6',
+              600: '#7c3aed',
+              700: '#6d28d9',
+              800: '#5b21b6',
+              900: '#4c1d95',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Skeleton pulse animation */
+    @keyframes shimmer {
+      0%   { background-position: -400px 0; }
+      100% { background-position: 400px 0; }
+    }
+    .skeleton {
+      background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+      background-size: 800px 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 6px;
+    }
+    .skeleton-light {
+      background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+      background-size: 800px 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 6px;
+    }
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    /* Nav active glow */
+    .nav-active {
+      background: linear-gradient(135deg, #7c3aed22, #7c3aed11);
+      border-left: 3px solid #7c3aed;
+    }
+    .nav-item:hover:not(.nav-active) {
+      background: rgba(255,255,255,0.05);
+    }
+    /* Card hover */
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(124,58,237,0.15);
+    }
+    .stat-card { transition: transform 0.2s, box-shadow 0.2s; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen flex flex-col">
+
+<!-- ============================================================
+     LOGIN ERROR BANNER
+============================================================ -->
+<div id="loginBanner" class="hidden fixed top-0 left-0 right-0 z-50 bg-red-900/90 backdrop-blur border-b border-red-700 px-4 py-3 flex items-center gap-3">
+  <svg class="w-5 h-5 text-red-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+  </svg>
+  <span id="loginBannerMsg" class="text-red-200 text-sm font-medium">Authentication failed. API may be unavailable.</span>
+  <button onclick="document.getElementById('loginBanner').classList.add('hidden')" class="ml-auto text-red-400 hover:text-red-200">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+    </svg>
+  </button>
+</div>
+
+<!-- ============================================================
+     APP SHELL
+============================================================ -->
+<div class="flex flex-1 overflow-hidden" style="height:100vh;">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="flex-none w-64 flex flex-col" style="background:#0f172a; border-right:1px solid #1e293b;">
+
+    <!-- Logo -->
+    <div class="flex items-center gap-3 px-5 py-5 border-b border-slate-800">
+      <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:linear-gradient(135deg,#7c3aed,#a78bfa);">
+        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>
+        </svg>
+      </div>
+      <div>
+        <div class="text-white font-bold text-sm leading-none">Cyclos.ai</div>
+        <div class="text-brand-400 text-xs mt-0.5 font-medium">Admin Portal</div>
+      </div>
+    </div>
+
+    <!-- Nav -->
+    <nav class="flex-1 py-4 overflow-y-auto">
+      <div class="px-3 mb-2">
+        <p class="text-slate-500 text-xs font-semibold uppercase tracking-wider px-2 mb-1">Main</p>
+      </div>
+      <ul class="space-y-0.5 px-2">
+        <li>
+          <button onclick="setSection('dashboard')" data-nav="dashboard"
+            class="nav-item nav-active w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white transition-colors">
+            <svg class="w-4 h-4 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+            </svg>
+            Dashboard
+          </button>
+        </li>
+        <li>
+          <button onclick="setSection('organizations')" data-nav="organizations"
+            class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+            </svg>
+            Organizations
+          </button>
+        </li>
+        <li>
+          <button onclick="setSection('users')" data-nav="users"
+            class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            Users &amp; Roles
+          </button>
+        </li>
+        <li>
+          <button onclick="setSection('carriers')" data-nav="carriers"
+            class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/>
+            </svg>
+            Carriers
+          </button>
+        </li>
+        <li>
+          <button onclick="setSection('containers')" data-nav="containers"
+            class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10"/>
+            </svg>
+            Containers
+          </button>
+        </li>
+      </ul>
+
+      <div class="px-3 mt-5 mb-2">
+        <p class="text-slate-500 text-xs font-semibold uppercase tracking-wider px-2 mb-1">System</p>
+      </div>
+      <ul class="space-y-0.5 px-2">
+        <li>
+          <button onclick="setSection('integrations')" data-nav="integrations"
+            class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"/>
+            </svg>
+            Integrations
+          </button>
+        </li>
+        <li>
+          <button onclick="setSection('webhooks')" data-nav="webhooks"
+            class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+            </svg>
+            Webhooks
+          </button>
+        </li>
+        <li>
+          <button onclick="setSection('settings')" data-nav="settings"
+            class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            System Settings
+          </button>
+        </li>
+        <li>
+          <button onclick="setSection('auditlog')" data-nav="auditlog"
+            class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+            </svg>
+            Audit Log
+          </button>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- Sidebar footer -->
+    <div class="border-t border-slate-800 px-5 py-4">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-full bg-brand-700 flex items-center justify-center text-xs font-bold text-white">SA</div>
+        <div class="flex-1 min-w-0">
+          <div class="text-white text-xs font-semibold truncate">System Admin</div>
+          <div class="text-brand-400 text-xs truncate">super_admin</div>
+        </div>
+        <div id="authDot" class="w-2 h-2 rounded-full bg-slate-600" title="Authenticating..."></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── MAIN AREA ── -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+
+    <!-- HEADER -->
+    <header class="flex-none flex items-center justify-between px-6 py-4 border-b border-slate-800" style="background:#0f172a;">
+      <div class="flex items-center gap-3">
+        <h1 class="text-white font-semibold text-lg">Cyclos.ai — Admin Portal</h1>
+        <span class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-900/60 text-brand-300 border border-brand-800">
+          <span class="w-1.5 h-1.5 rounded-full bg-brand-400"></span>
+          Super Admin
+        </span>
+      </div>
+      <div class="flex items-center gap-4">
+        <!-- Auth status -->
+        <div id="authStatus" class="flex items-center gap-2 text-xs text-slate-500">
+          <svg id="authSpinner" class="w-3 h-3 animate-spin text-brand-400" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+          </svg>
+          <span id="authLabel">Connecting...</span>
+        </div>
+        <!-- API status badge -->
+        <div id="apiStatus" class="hidden items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700">
+          <span id="apiDot" class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
+          <span id="apiLabel">API</span>
+        </div>
+        <!-- Open app link -->
+        <a href="http://demo.localhost:8000" target="_blank"
+          class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition-colors"
+          style="background:#7c3aed;" onmouseover="this.style.background='#6d28d9'" onmouseout="this.style.background='#7c3aed'">
+          Open Full App
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+          </svg>
+        </a>
+      </div>
+    </header>
+
+    <!-- CONTENT AREA -->
+    <main class="flex-1 overflow-y-auto bg-slate-950">
+
+      <!-- ═══════════════════════════════════
+           DASHBOARD SECTION
+      ═══════════════════════════════════ -->
+      <section id="section-dashboard" class="p-6 space-y-6">
+
+        <!-- Page heading -->
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-xl font-bold text-white">System Dashboard</h2>
+            <p class="text-slate-400 text-sm mt-0.5">Real-time overview across all tenants</p>
+          </div>
+          <button onclick="refreshDashboard()"
+            class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 text-sm hover:bg-slate-700 transition-colors">
+            <svg id="refreshIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            Refresh
+          </button>
+        </div>
+
+        <!-- ── STAT CARDS ── -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+
+          <!-- Total Containers -->
+          <div class="stat-card rounded-xl p-5 border border-slate-800" style="background:#111827;">
+            <div class="flex items-start justify-between mb-3">
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:#7c3aed22;">
+                <svg class="w-5 h-5 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10"/>
+                </svg>
+              </div>
+              <span class="text-xs text-slate-500 font-medium">All tenants</span>
+            </div>
+            <div id="stat-containers" class="skeleton h-8 w-20 mb-1"></div>
+            <div class="text-slate-400 text-sm">Total Containers</div>
+          </div>
+
+          <!-- Active Carriers -->
+          <div class="stat-card rounded-xl p-5 border border-slate-800" style="background:#111827;">
+            <div class="flex items-start justify-between mb-3">
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:#0ea5e922;">
+                <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/>
+                </svg>
+              </div>
+              <span class="text-xs text-slate-500 font-medium">Active</span>
+            </div>
+            <div id="stat-carriers" class="skeleton h-8 w-20 mb-1"></div>
+            <div class="text-slate-400 text-sm">Active Carriers</div>
+          </div>
+
+          <!-- Active Vessels -->
+          <div class="stat-card rounded-xl p-5 border border-slate-800" style="background:#111827;">
+            <div class="flex items-start justify-between mb-3">
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:#10b98122;">
+                <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/>
+                </svg>
+              </div>
+              <span class="text-xs text-slate-500 font-medium">At sea</span>
+            </div>
+            <div id="stat-vessels" class="skeleton h-8 w-20 mb-1"></div>
+            <div class="text-slate-400 text-sm">Active Vessels</div>
+          </div>
+
+          <!-- Integrations -->
+          <div class="stat-card rounded-xl p-5 border border-slate-800" style="background:#111827;">
+            <div class="flex items-start justify-between mb-3">
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:#f59e0b22;">
+                <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"/>
+                </svg>
+              </div>
+              <span class="text-xs text-slate-500 font-medium">Connected</span>
+            </div>
+            <div id="stat-integrations" class="skeleton h-8 w-20 mb-1"></div>
+            <div class="text-slate-400 text-sm">Integrations</div>
+          </div>
+
+        </div>
+
+        <!-- ── TWO-COLUMN ROW ── -->
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+          <!-- Recent Containers Table (2/3 width) -->
+          <div class="xl:col-span-2 rounded-xl border border-slate-800 overflow-hidden" style="background:#111827;">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-slate-800">
+              <div>
+                <h3 class="text-white font-semibold text-sm">Recent Containers</h3>
+                <p class="text-slate-500 text-xs mt-0.5">Latest 10 across all tenants</p>
+              </div>
+              <a href="http://demo.localhost:8000/containers" target="_blank"
+                class="text-brand-400 text-xs hover:text-brand-300 flex items-center gap-1 transition-colors">
+                View all
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+              </a>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="border-b border-slate-800/50">
+                    <th class="text-left px-5 py-3 text-slate-500 font-medium text-xs uppercase tracking-wider">Container #</th>
+                    <th class="text-left px-3 py-3 text-slate-500 font-medium text-xs uppercase tracking-wider">MBL</th>
+                    <th class="text-left px-3 py-3 text-slate-500 font-medium text-xs uppercase tracking-wider">Status</th>
+                    <th class="text-left px-3 py-3 text-slate-500 font-medium text-xs uppercase tracking-wider">Carrier</th>
+                    <th class="text-left px-3 py-3 text-slate-500 font-medium text-xs uppercase tracking-wider">Route</th>
+                    <th class="text-left px-3 py-3 text-slate-500 font-medium text-xs uppercase tracking-wider">ETA</th>
+                    <th class="text-left px-3 py-3 text-slate-500 font-medium text-xs uppercase tracking-wider">Created</th>
+                  </tr>
+                </thead>
+                <tbody id="containersTableBody">
+                  <!-- Skeleton rows -->
+                  <tr class="border-b border-slate-800/30"><td class="px-5 py-3"><div class="skeleton h-4 w-28"></div></td><td class="px-3 py-3"><div class="skeleton h-4 w-24"></div></td><td class="px-3 py-3"><div class="skeleton h-5 w-16 rounded-full"></div></td><td class="px-3 py-3"><div class="skeleton h-4 w-16"></div></td><td class="px-3 py-3"><div class="skeleton h-4 w-20"></div></td><td class="px-3 py-3"><div class="skeleton h-4 w-20"></div></td><td class="px-3 py-3"><div class="skeleton h-4 w-20"></div></td></tr>
+                  <tr class="border-b border-slate-800/30"><td class="px-5 py-3"><div class="skeleton h-4 w-28"></div></td><td class="px-3 py-3"><div class="skeleton h-4 w-24"></div></td><td class="px-3 py-3"><div class="skeleton h-5 w-16 rounded-full"></div></td><td class="px-3 py-3"><div class="skeleton h-4 w-16"></div></td><td class="px-3 py-3"><div class="skeleton h-4 w-20"></div></td><td class="px-3 py-3"><div class="skeleton h-4 w-20"></div></td><td class="px-3 py-3"><div class="skeleton h-4 w-20"></div></td></tr>
+                  <tr class="border-b border-slate-800/30"><td class="px-5 py-3"><div class="skeleton h-4 w-28"></div></td><td class="px-3 py-3"><div class="skeleton h-4 w-24"></div></td><td class="px-3 py-3"><div class="skeleton h-5 w-16 rounded-full"></div></td><td class="px-3 py-3"><div class="skeleton h-4 w-16"></div></td><td class="px-3 py-3"><div class="skeleton h-4 w-20"></div></td><td class="px-3 py-3"><div class="skeleton h-4 w-20"></div></td><td class="px-3 py-3"><div class="skeleton h-4 w-20"></div></td></tr>
+                  <tr><td class="px-5 py-3"><div class="skeleton h-4 w-28"></div></td><td class="px-3 py-3"><div class="skeleton h-4 w-24"></div></td><td class="px-3 py-3"><div class="skeleton h-5 w-16 rounded-full"></div></td><td class="px-3 py-3"><div class="skeleton h-4 w-16"></div></td><td class="px-3 py-3"><div class="skeleton h-4 w-20"></div></td><td class="px-3 py-3"><div class="skeleton h-4 w-20"></div></td><td class="px-3 py-3"><div class="skeleton h-4 w-20"></div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Carrier Overview (1/3 width) -->
+          <div class="rounded-xl border border-slate-800 overflow-hidden" style="background:#111827;">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-slate-800">
+              <div>
+                <h3 class="text-white font-semibold text-sm">Carrier Overview</h3>
+                <p class="text-slate-500 text-xs mt-0.5">All registered carriers</p>
+              </div>
+            </div>
+            <div id="carriersTableBody" class="divide-y divide-slate-800/50">
+              <!-- Skeleton -->
+              <div class="px-5 py-3 flex items-center justify-between"><div class="skeleton h-4 w-28"></div><div class="skeleton h-4 w-12"></div></div>
+              <div class="px-5 py-3 flex items-center justify-between"><div class="skeleton h-4 w-28"></div><div class="skeleton h-4 w-12"></div></div>
+              <div class="px-5 py-3 flex items-center justify-between"><div class="skeleton h-4 w-28"></div><div class="skeleton h-4 w-12"></div></div>
+            </div>
+            <div class="px-5 py-4 border-t border-slate-800">
+              <a href="http://demo.localhost:8000/carrier-onboarding" target="_blank"
+                class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-brand-400 border border-brand-800 hover:bg-brand-900/30 transition-colors">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Carrier Onboarding
+              </a>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ── QUICK ACTIONS ── -->
+        <div class="rounded-xl border border-slate-800 p-5" style="background:#111827;">
+          <h3 class="text-white font-semibold text-sm mb-4">Quick Actions</h3>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+
+            <a href="http://demo.localhost:8000/settings/organizations" target="_blank"
+              class="flex flex-col items-center gap-2 p-4 rounded-xl border border-slate-700 hover:border-brand-700 hover:bg-brand-900/20 transition-all group">
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-slate-800 group-hover:bg-brand-900 transition-colors">
+                <svg class="w-5 h-5 text-slate-400 group-hover:text-brand-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                </svg>
+              </div>
+              <span class="text-xs font-medium text-slate-400 group-hover:text-white transition-colors text-center">Manage Organizations</span>
+            </a>
+
+            <a href="http://demo.localhost:8000/containers" target="_blank"
+              class="flex flex-col items-center gap-2 p-4 rounded-xl border border-slate-700 hover:border-cyan-700 hover:bg-cyan-900/20 transition-all group">
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-slate-800 group-hover:bg-cyan-900 transition-colors">
+                <svg class="w-5 h-5 text-slate-400 group-hover:text-cyan-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10"/>
+                </svg>
+              </div>
+              <span class="text-xs font-medium text-slate-400 group-hover:text-white transition-colors text-center">View All Containers</span>
+            </a>
+
+            <a href="http://demo.localhost:8000/carrier-onboarding" target="_blank"
+              class="flex flex-col items-center gap-2 p-4 rounded-xl border border-slate-700 hover:border-emerald-700 hover:bg-emerald-900/20 transition-all group">
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-slate-800 group-hover:bg-emerald-900 transition-colors">
+                <svg class="w-5 h-5 text-slate-400 group-hover:text-emerald-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/>
+                </svg>
+              </div>
+              <span class="text-xs font-medium text-slate-400 group-hover:text-white transition-colors text-center">Carrier Onboarding</span>
+            </a>
+
+            <a href="http://demo.localhost:8000/settings" target="_blank"
+              class="flex flex-col items-center gap-2 p-4 rounded-xl border border-slate-700 hover:border-amber-700 hover:bg-amber-900/20 transition-all group">
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-slate-800 group-hover:bg-amber-900 transition-colors">
+                <svg class="w-5 h-5 text-slate-400 group-hover:text-amber-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+              </div>
+              <span class="text-xs font-medium text-slate-400 group-hover:text-white transition-colors text-center">System Settings</span>
+            </a>
+
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ═══════════════════════════════════
+           PLACEHOLDER SECTIONS (non-dashboard)
+      ═══════════════════════════════════ -->
+      <section id="section-organizations" class="hidden p-6">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h2 class="text-xl font-bold text-white">Organizations</h2>
+            <p class="text-slate-400 text-sm mt-0.5">Manage tenant organizations</p>
+          </div>
+          <a href="http://demo.localhost:8000/settings/organizations" target="_blank"
+            class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-colors"
+            style="background:#7c3aed;" onmouseover="this.style.background='#6d28d9'" onmouseout="this.style.background='#7c3aed'">
+            Open in App →
+          </a>
+        </div>
+        <div class="rounded-xl border border-slate-800 p-10 flex flex-col items-center justify-center" style="background:#111827;">
+          <svg class="w-12 h-12 text-slate-700 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+          </svg>
+          <p class="text-slate-400 text-sm">Organization management available in the full app.</p>
+          <a href="http://demo.localhost:8000/settings/organizations" target="_blank" class="text-brand-400 text-sm hover:text-brand-300 mt-2">Open full app →</a>
+        </div>
+      </section>
+
+      <section id="section-users" class="hidden p-6">
+        <div class="mb-6">
+          <h2 class="text-xl font-bold text-white">Users &amp; Roles</h2>
+          <p class="text-slate-400 text-sm mt-0.5">Manage user accounts and permissions</p>
+        </div>
+        <div class="rounded-xl border border-slate-800 p-10 flex flex-col items-center justify-center" style="background:#111827;">
+          <svg class="w-12 h-12 text-slate-700 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+          <p class="text-slate-400 text-sm">User management available in the full app.</p>
+        </div>
+      </section>
+
+      <section id="section-carriers" class="hidden p-6">
+        <div class="mb-6">
+          <h2 class="text-xl font-bold text-white">Carriers</h2>
+          <p class="text-slate-400 text-sm mt-0.5">All registered ocean carriers</p>
+        </div>
+        <div id="carriersFullSection" class="rounded-xl border border-slate-800 overflow-hidden" style="background:#111827;">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-slate-800">
+                  <th class="text-left px-5 py-3 text-slate-500 font-medium text-xs uppercase tracking-wider">Name</th>
+                  <th class="text-left px-3 py-3 text-slate-500 font-medium text-xs uppercase tracking-wider">SCAC</th>
+                  <th class="text-left px-3 py-3 text-slate-500 font-medium text-xs uppercase tracking-wider">Type</th>
+                </tr>
+              </thead>
+              <tbody id="carriersFullBody">
+                <tr class="border-b border-slate-800/30"><td colspan="3" class="px-5 py-8 text-center text-slate-500 text-sm">Loading carriers...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="section-containers" class="hidden p-6">
+        <div class="mb-6">
+          <h2 class="text-xl font-bold text-white">All Containers</h2>
+          <p class="text-slate-400 text-sm mt-0.5">Cross-tenant container view</p>
+        </div>
+        <div class="rounded-xl border border-slate-800 overflow-hidden" style="background:#111827;">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-slate-800">
+                  <th class="text-left px-5 py-3 text-slate-500 font-medium text-xs uppercase tracking-wider">Container #</th>
+                  <th class="text-left px-3 py-3 text-slate-500 font-medium text-xs uppercase tracking-wider">MBL</th>
+                  <th class="text-left px-3 py-3 text-slate-500 font-medium text-xs uppercase tracking-wider">Status</th>
+                  <th class="text-left px-3 py-3 text-slate-500 font-medium text-xs uppercase tracking-wider">Carrier</th>
+                  <th class="text-left px-3 py-3 text-slate-500 font-medium text-xs uppercase tracking-wider">Route</th>
+                  <th class="text-left px-3 py-3 text-slate-500 font-medium text-xs uppercase tracking-wider">ETA</th>
+                  <th class="text-left px-3 py-3 text-slate-500 font-medium text-xs uppercase tracking-wider">Created</th>
+                </tr>
+              </thead>
+              <tbody id="containersFullBody">
+                <tr><td colspan="7" class="px-5 py-8 text-center text-slate-500 text-sm">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="section-integrations" class="hidden p-6">
+        <div class="mb-6">
+          <h2 class="text-xl font-bold text-white">Integrations</h2>
+          <p class="text-slate-400 text-sm mt-0.5">Carrier API integrations</p>
+        </div>
+        <div id="integrationsContent" class="space-y-3"></div>
+      </section>
+
+      <section id="section-webhooks" class="hidden p-6">
+        <div class="mb-6">
+          <h2 class="text-xl font-bold text-white">Webhooks</h2>
+          <p class="text-slate-400 text-sm mt-0.5">Outbound webhook configuration</p>
+        </div>
+        <div class="rounded-xl border border-slate-800 p-10 flex flex-col items-center justify-center" style="background:#111827;">
+          <svg class="w-12 h-12 text-slate-700 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+          </svg>
+          <p class="text-slate-400 text-sm">Webhook management coming soon.</p>
+        </div>
+      </section>
+
+      <section id="section-settings" class="hidden p-6">
+        <div class="mb-6">
+          <h2 class="text-xl font-bold text-white">System Settings</h2>
+          <p class="text-slate-400 text-sm mt-0.5">Global configuration</p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <a href="http://demo.localhost:8000/settings" target="_blank"
+            class="rounded-xl border border-slate-800 p-5 hover:border-brand-700 hover:bg-brand-900/10 transition-all group" style="background:#111827;">
+            <div class="flex items-center gap-3 mb-2">
+              <div class="w-8 h-8 rounded-lg bg-brand-900 flex items-center justify-center">
+                <svg class="w-4 h-4 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+              </div>
+              <h4 class="text-white text-sm font-semibold">General Settings</h4>
+            </div>
+            <p class="text-slate-500 text-xs">Open full settings in the app</p>
+          </a>
+          <a href="http://demo.localhost:8000/settings/organizations" target="_blank"
+            class="rounded-xl border border-slate-800 p-5 hover:border-brand-700 hover:bg-brand-900/10 transition-all group" style="background:#111827;">
+            <div class="flex items-center gap-3 mb-2">
+              <div class="w-8 h-8 rounded-lg bg-brand-900 flex items-center justify-center">
+                <svg class="w-4 h-4 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                </svg>
+              </div>
+              <h4 class="text-white text-sm font-semibold">Organizations</h4>
+            </div>
+            <p class="text-slate-500 text-xs">Manage tenant organizations</p>
+          </a>
+        </div>
+      </section>
+
+      <section id="section-auditlog" class="hidden p-6">
+        <div class="mb-6">
+          <h2 class="text-xl font-bold text-white">Audit Log</h2>
+          <p class="text-slate-400 text-sm mt-0.5">System-wide activity trail</p>
+        </div>
+        <div class="rounded-xl border border-slate-800 p-10 flex flex-col items-center justify-center" style="background:#111827;">
+          <svg class="w-12 h-12 text-slate-700 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+          </svg>
+          <p class="text-slate-400 text-sm">Audit log endpoint not available — coming soon.</p>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="flex-none border-t border-slate-800 px-6 py-3 flex items-center justify-between" style="background:#0f172a;">
+      <span class="text-slate-500 text-xs">Powered by Cyclos.ai — System Administration</span>
+      <div class="flex items-center gap-4 text-xs text-slate-600">
+        <span id="footerApiVersion">API v1</span>
+        <span id="footerApiStatus" class="flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-slate-600"></span>
+          <span>Checking...</span>
+        </span>
+        <span id="footerTimestamp"></span>
+      </div>
+    </footer>
+
+  </div><!-- /main area -->
+</div><!-- /app shell -->
+
+<!-- ============================================================
+     JAVASCRIPT
+============================================================ -->
+<script>
+  // ─── CONFIG ───────────────────────────────────────────────────
+  const API_BASE = '/api/v1';
+  const ADMIN_EMAIL = 'admin@cyclos.ai';
+  const ADMIN_PASS  = 'password';
+
+  let authToken = null;
+  let currentSection = 'dashboard';
+
+  // ─── STATUS BADGE COLORS ──────────────────────────────────────
+  const STATUS_BADGES = {
+    // active / in transit
+    'in_transit':          'bg-blue-900/60 text-blue-300 border border-blue-800',
+    'at_sea':              'bg-blue-900/60 text-blue-300 border border-blue-800',
+    'on_vessel':           'bg-blue-900/60 text-blue-300 border border-blue-800',
+    // arrived / discharged
+    'arrived':             'bg-emerald-900/60 text-emerald-300 border border-emerald-800',
+    'discharged':          'bg-emerald-900/60 text-emerald-300 border border-emerald-800',
+    'gate_out':            'bg-emerald-900/60 text-emerald-300 border border-emerald-800',
+    'delivered':           'bg-emerald-900/60 text-emerald-300 border border-emerald-800',
+    // pending / waiting
+    'pending':             'bg-amber-900/60 text-amber-300 border border-amber-800',
+    'empty_return':        'bg-amber-900/60 text-amber-300 border border-amber-800',
+    'at_origin':           'bg-amber-900/60 text-amber-300 border border-amber-800',
+    // loaded / booked
+    'loaded':              'bg-cyan-900/60 text-cyan-300 border border-cyan-800',
+    'booked':              'bg-cyan-900/60 text-cyan-300 border border-cyan-800',
+    'gate_in':             'bg-cyan-900/60 text-cyan-300 border border-cyan-800',
+    // exception / hold
+    'on_hold':             'bg-red-900/60 text-red-300 border border-red-800',
+    'customs_hold':        'bg-red-900/60 text-red-300 border border-red-800',
+    'exception':           'bg-red-900/60 text-red-300 border border-red-800',
+    // default
+    '_default':            'bg-slate-800 text-slate-400 border border-slate-700',
+  };
+
+  function getStatusBadge(status) {
+    if (!status) return `<span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_BADGES['_default']}">—</span>`;
+    const key = status.toLowerCase().replace(/[\s-]/g, '_');
+    const cls = STATUS_BADGES[key] || STATUS_BADGES['_default'];
+    const label = status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    return `<span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${cls}">${label}</span>`;
+  }
+
+  // ─── UTILS ────────────────────────────────────────────────────
+  function fmt(val, fallback = '—') {
+    return val || fallback;
+  }
+
+  function fmtDate(dateStr) {
+    if (!dateStr) return '—';
+    try {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
+    } catch { return dateStr; }
+  }
+
+  function setTimestamp() {
+    const el = document.getElementById('footerTimestamp');
+    if (el) el.textContent = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  // ─── AUTH ─────────────────────────────────────────────────────
+  async function doLogin() {
+    try {
+      const res = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Tenant': 'demo' },
+        body: JSON.stringify({ email: ADMIN_EMAIL, password: ADMIN_PASS }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      // Common token field patterns
+      authToken = data.token || data.access_token || data.data?.token || data.data?.access_token || null;
+      if (!authToken) throw new Error('No token in response');
+      setAuthSuccess();
+      return true;
+    } catch (err) {
+      setAuthFailed(err.message);
+      return false;
+    }
+  }
+
+  function setAuthSuccess() {
+    document.getElementById('authSpinner').classList.add('hidden');
+    document.getElementById('authLabel').textContent = 'Authenticated';
+    document.getElementById('authLabel').className = 'text-emerald-400 font-medium';
+    document.getElementById('authDot').className = 'w-2 h-2 rounded-full bg-emerald-400';
+    // show api status pill
+    document.getElementById('apiStatus').classList.remove('hidden');
+    document.getElementById('apiStatus').classList.add('flex');
+    document.getElementById('apiDot').className = 'w-1.5 h-1.5 rounded-full bg-emerald-400';
+    document.getElementById('apiLabel').textContent = 'API Online';
+    document.getElementById('footerApiStatus').innerHTML =
+      '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block mr-1"></span><span class="text-emerald-500">Online</span>';
+  }
+
+  function setAuthFailed(msg) {
+    document.getElementById('authSpinner').classList.add('hidden');
+    document.getElementById('authLabel').textContent = 'Auth Failed';
+    document.getElementById('authLabel').className = 'text-red-400 font-medium';
+    document.getElementById('authDot').className = 'w-2 h-2 rounded-full bg-red-500';
+    document.getElementById('apiStatus').classList.remove('hidden');
+    document.getElementById('apiStatus').classList.add('flex');
+    document.getElementById('apiDot').className = 'w-1.5 h-1.5 rounded-full bg-red-400';
+    document.getElementById('apiLabel').textContent = 'API Error';
+    document.getElementById('footerApiStatus').innerHTML =
+      '<span class="w-1.5 h-1.5 rounded-full bg-red-400 inline-block mr-1"></span><span class="text-red-500">Offline</span>';
+    const banner = document.getElementById('loginBanner');
+    document.getElementById('loginBannerMsg').textContent = `Authentication failed: ${msg}. API may be unavailable — data below may be incomplete.`;
+    banner.classList.remove('hidden');
+  }
+
+  // ─── API FETCH HELPER ─────────────────────────────────────────
+  async function apiFetch(path) {
+    const headers = { 'Accept': 'application/json', 'X-Tenant': 'demo' };
+    if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+    const res = await fetch(`${API_BASE}${path}`, { headers });
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+    return res.json();
+  }
+
+  // ─── STAT CARDS ───────────────────────────────────────────────
+  async function loadStatCards() {
+    const renders = [
+      { id: 'stat-containers', path: '/containers?page_size=1', resolve: d => d?.meta?.total ?? d?.data?.length ?? '—' },
+      { id: 'stat-carriers',   path: '/carriers?page_size=1',   resolve: d => d?.meta?.total ?? d?.data?.length ?? '—' },
+      { id: 'stat-vessels',    path: '/vessels?page_size=1',     resolve: d => d?.meta?.total ?? d?.data?.length ?? '—' },
+      { id: 'stat-integrations', path: '/carrier-integrations',  resolve: d => Array.isArray(d?.data) ? d.data.length : (Array.isArray(d) ? d.length : '—') },
+    ];
+    for (const { id, path, resolve } of renders) {
+      apiFetch(path).then(data => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const val = resolve(data);
+        el.className = 'text-3xl font-bold text-white mb-1 tabular-nums';
+        el.textContent = typeof val === 'number' ? val.toLocaleString() : val;
+      }).catch(() => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.className = 'text-3xl font-bold text-slate-600 mb-1';
+        el.textContent = '—';
+      });
+    }
+  }
+
+  // ─── RECENT CONTAINERS TABLE ──────────────────────────────────
+  async function loadRecentContainers() {
+    try {
+      const data = await apiFetch('/containers?page_num=0&page_size=10&order_by=created_at&direction=-1');
+      const rows = data?.data || data?.containers || [];
+      renderContainersTable('containersTableBody', rows, true);
+    } catch (err) {
+      document.getElementById('containersTableBody').innerHTML =
+        `<tr><td colspan="7" class="px-5 py-6 text-center text-slate-500 text-sm">Could not load containers — ${err.message}</td></tr>`;
+    }
+  }
+
+  function renderContainersTable(tbodyId, rows, dark = true) {
+    const tbody = document.getElementById(tbodyId);
+    if (!tbody) return;
+    if (!rows.length) {
+      tbody.innerHTML = `<tr><td colspan="7" class="px-5 py-8 text-center text-slate-500 text-sm">No containers found.</td></tr>`;
+      return;
+    }
+    const rowClass = dark ? 'border-b border-slate-800/40 hover:bg-slate-800/30' : 'border-b border-slate-800/40 hover:bg-slate-800/20';
+    tbody.innerHTML = rows.map(c => {
+      const containerNum = fmt(c.container_number || c.number || c.container_num);
+      const mbl = fmt(c.mbl_number || (typeof c.mbl === 'string' ? c.mbl : null) || c.master_bill_of_lading || c.bill_of_lading);
+      const status = getStatusBadge(c.status || c.tracking_status);
+      const carrier = fmt(c.shipping_line || c.carrier_scac || c.carrier?.name || c.carrier_name);
+      const pol = fmt(c.pol || c.port_of_loading || c.origin_port);
+      const pod = fmt(c.pod || c.port_of_discharge || c.destination_port);
+      const eta = fmtDate(c.eta || c.estimated_arrival);
+      const created = fmtDate(c.created_at);
+      return `
+        <tr class="${rowClass} transition-colors">
+          <td class="px-5 py-3 text-white text-xs font-mono font-semibold">${containerNum}</td>
+          <td class="px-3 py-3 text-slate-400 text-xs font-mono">${mbl}</td>
+          <td class="px-3 py-3">${status}</td>
+          <td class="px-3 py-3 text-slate-300 text-xs">${carrier}</td>
+          <td class="px-3 py-3 text-slate-400 text-xs">
+            <span class="text-slate-300">${pol}</span>
+            <span class="text-slate-600 mx-1">→</span>
+            <span class="text-slate-300">${pod}</span>
+          </td>
+          <td class="px-3 py-3 text-slate-400 text-xs">${eta}</td>
+          <td class="px-3 py-3 text-slate-500 text-xs">${created}</td>
+        </tr>`;
+    }).join('');
+  }
+
+  // ─── CARRIERS TABLE ───────────────────────────────────────────
+  async function loadCarriers() {
+    try {
+      const data = await apiFetch('/carriers');
+      const carriers = data?.data || data?.carriers || (Array.isArray(data) ? data : []);
+      renderCarrierSidebar(carriers);
+      renderCarriersFull(carriers);
+    } catch (err) {
+      document.getElementById('carriersTableBody').innerHTML =
+        `<div class="px-5 py-4 text-slate-500 text-sm">Could not load carriers</div>`;
+    }
+  }
+
+  function renderCarrierSidebar(carriers) {
+    const el = document.getElementById('carriersTableBody');
+    if (!el) return;
+    if (!carriers.length) {
+      el.innerHTML = `<div class="px-5 py-4 text-slate-500 text-sm">No carriers found.</div>`;
+      return;
+    }
+    el.innerHTML = carriers.slice(0, 8).map(c => {
+      const name = fmt(c.name || c.carrier_name);
+      const scac = fmt(c.scac || c.scac_code || c.code);
+      return `
+        <div class="px-5 py-3 flex items-center justify-between hover:bg-slate-800/30 transition-colors">
+          <div>
+            <div class="text-white text-xs font-medium">${name}</div>
+            ${c.type ? `<div class="text-slate-500 text-xs">${c.type}</div>` : ''}
+          </div>
+          <span class="text-brand-400 text-xs font-mono font-bold">${scac}</span>
+        </div>`;
+    }).join('');
+  }
+
+  function renderCarriersFull(carriers) {
+    const el = document.getElementById('carriersFullBody');
+    if (!el) return;
+    if (!carriers.length) {
+      el.innerHTML = `<tr><td colspan="3" class="px-5 py-8 text-center text-slate-500 text-sm">No carriers found.</td></tr>`;
+      return;
+    }
+    el.innerHTML = carriers.map(c => {
+      const name = fmt(c.name || c.carrier_name);
+      const scac = fmt(c.scac || c.scac_code || c.code);
+      const type = fmt(c.type || c.carrier_type || '—');
+      return `
+        <tr class="border-b border-slate-800/40 hover:bg-slate-800/30 transition-colors">
+          <td class="px-5 py-3 text-white text-sm font-medium">${name}</td>
+          <td class="px-3 py-3 text-brand-400 text-sm font-mono font-bold">${scac}</td>
+          <td class="px-3 py-3 text-slate-400 text-sm">${type}</td>
+        </tr>`;
+    }).join('');
+  }
+
+  // ─── INTEGRATIONS SECTION ─────────────────────────────────────
+  async function loadIntegrations() {
+    const el = document.getElementById('integrationsContent');
+    if (!el) return;
+    try {
+      const data = await apiFetch('/carrier-integrations');
+      const integrations = data?.data || (Array.isArray(data) ? data : []);
+      if (!integrations.length) {
+        el.innerHTML = `<div class="rounded-xl border border-slate-800 p-10 flex flex-col items-center justify-center" style="background:#111827;"><p class="text-slate-400 text-sm">No integrations configured.</p></div>`;
+        return;
+      }
+      el.innerHTML = `
+        <div class="rounded-xl border border-slate-800 overflow-hidden" style="background:#111827;">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-slate-800">
+                  <th class="text-left px-5 py-3 text-slate-500 font-medium text-xs uppercase tracking-wider">Integration</th>
+                  <th class="text-left px-3 py-3 text-slate-500 font-medium text-xs uppercase tracking-wider">Carrier</th>
+                  <th class="text-left px-3 py-3 text-slate-500 font-medium text-xs uppercase tracking-wider">Type</th>
+                  <th class="text-left px-3 py-3 text-slate-500 font-medium text-xs uppercase tracking-wider">Status</th>
+                  <th class="text-left px-3 py-3 text-slate-500 font-medium text-xs uppercase tracking-wider">Created</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${integrations.map(i => {
+                  const name = fmt(i.name || i.integration_name || i.id);
+                  const carrier = fmt(i.carrier?.name || i.carrier_name || i.scac);
+                  const type = fmt(i.type || i.integration_type || '—');
+                  const status = getStatusBadge(i.status || i.is_active ? 'active' : 'inactive');
+                  const created = fmtDate(i.created_at);
+                  return `<tr class="border-b border-slate-800/40 hover:bg-slate-800/30 transition-colors">
+                    <td class="px-5 py-3 text-white text-sm font-medium">${name}</td>
+                    <td class="px-3 py-3 text-slate-400 text-sm">${carrier}</td>
+                    <td class="px-3 py-3 text-slate-400 text-sm">${type}</td>
+                    <td class="px-3 py-3">${status}</td>
+                    <td class="px-3 py-3 text-slate-500 text-sm">${created}</td>
+                  </tr>`;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>`;
+    } catch (err) {
+      el.innerHTML = `<div class="rounded-xl border border-slate-800 p-8 text-center" style="background:#111827;"><p class="text-slate-500 text-sm">Could not load integrations — ${err.message}</p></div>`;
+    }
+  }
+
+  // ─── CONTAINERS FULL SECTION ──────────────────────────────────
+  async function loadContainersFull() {
+    try {
+      const data = await apiFetch('/containers?page_num=0&page_size=50&order_by=created_at&direction=-1');
+      const rows = data?.data || data?.containers || [];
+      renderContainersTable('containersFullBody', rows, true);
+    } catch (err) {
+      document.getElementById('containersFullBody').innerHTML =
+        `<tr><td colspan="7" class="px-5 py-6 text-center text-slate-500 text-sm">Could not load — ${err.message}</td></tr>`;
+    }
+  }
+
+  // ─── SECTION SWITCHING ────────────────────────────────────────
+  function setSection(id) {
+    // Hide all
+    document.querySelectorAll('section[id^="section-"]').forEach(s => s.classList.add('hidden'));
+    // Show target
+    const target = document.getElementById(`section-${id}`);
+    if (target) target.classList.remove('hidden');
+
+    // Update nav styles
+    document.querySelectorAll('[data-nav]').forEach(btn => {
+      btn.classList.remove('nav-active', 'text-white');
+      btn.classList.add('text-slate-400');
+    });
+    const activeBtn = document.querySelector(`[data-nav="${id}"]`);
+    if (activeBtn) {
+      activeBtn.classList.add('nav-active', 'text-white');
+      activeBtn.classList.remove('text-slate-400');
+    }
+
+    currentSection = id;
+
+    // Lazy load section-specific data
+    if (id === 'carriers') loadCarriersFull();
+    if (id === 'containers') loadContainersFull();
+    if (id === 'integrations') loadIntegrations();
+  }
+
+  async function loadCarriersFull() {
+    // Only fetch if not already populated
+    const el = document.getElementById('carriersFullBody');
+    if (el && el.querySelector('tr td[colspan]')) {
+      loadCarriers();
+    }
+  }
+
+  // ─── DASHBOARD REFRESH ────────────────────────────────────────
+  async function refreshDashboard() {
+    const icon = document.getElementById('refreshIcon');
+    icon.classList.add('animate-spin');
+    await Promise.allSettled([loadStatCards(), loadRecentContainers(), loadCarriers()]);
+    setTimestamp();
+    setTimeout(() => icon.classList.remove('animate-spin'), 600);
+  }
+
+  // ─── BOOTSTRAP ────────────────────────────────────────────────
+  async function init() {
+    setTimestamp();
+    const ok = await doLogin();
+    if (ok) {
+      await Promise.allSettled([
+        loadStatCards(),
+        loadRecentContainers(),
+        loadCarriers(),
+      ]);
+      setTimestamp();
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

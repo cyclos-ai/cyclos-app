@@ -34,6 +34,15 @@ const routes = [
         meta: { requiresGuest: true },
     },
 
+    // Public carrier onboarding (no auth required)
+    {
+        path: '/carrier/onboard/:tenantSlug/:token',
+        name: 'carrier-onboard',
+        component: () => import('@/views/carrier-onboard/CarrierOnboardView.vue'),
+        meta: { requiresGuest: false },
+        props: true,
+    },
+
     // App routes (require auth)
     {
         path: '/',
@@ -377,6 +386,12 @@ const routes = [
                 path: 'settings/billing',
                 name: 'settings-billing',
                 component: () => import('@/views/settings/BillingSettingsView.vue'),
+                meta: { roles: ['shipper', 'admin'] },
+            },
+            {
+                path: 'settings/carrier-management',
+                name: 'settings-carrier-management',
+                component: () => import('@/views/settings/CarrierManagementView.vue'),
                 meta: { roles: ['shipper', 'admin'] },
             },
 

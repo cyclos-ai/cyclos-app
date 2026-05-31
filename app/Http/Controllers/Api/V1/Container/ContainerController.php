@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1\Container;
 
+use App\Domain\Container\Enums\ContainerStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Container\FilterContainerRequest;
 use App\Http\Requests\Container\StoreContainerRequest;
@@ -18,7 +19,7 @@ class ContainerController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Container::query();
+        $query = Container::with('mbl');
 
         $this->applySorting(
             $query,
@@ -34,7 +35,7 @@ class ContainerController extends Controller
      */
     public function show(string $uuid): JsonResponse
     {
-        $container = Container::where('uuid', $uuid)->first();
+        $container = Container::with(['mbl', 'vessel'])->find($uuid);
 
         if (! $container) {
             return $this->notFound('Container not found');
@@ -50,7 +51,7 @@ class ContainerController extends Controller
     {
         $container = Container::create($request->validated());
 
-        return $this->created(new ContainerResource($container), 'Container created successfully');
+        return $this->created(new ContainerResource($container->load('mbl')), 'Container created successfully');
     }
 
     /**
@@ -58,7 +59,7 @@ class ContainerController extends Controller
      */
     public function update(UpdateContainerRequest $request, string $uuid): JsonResponse
     {
-        $container = Container::where('uuid', $uuid)->first();
+        $container = Container::find($uuid);
 
         if (! $container) {
             return $this->notFound('Container not found');
@@ -66,7 +67,7 @@ class ContainerController extends Controller
 
         $container->update($request->validated());
 
-        return $this->success(new ContainerResource($container->fresh()), 'Container updated successfully');
+        return $this->success(new ContainerResource($container->fresh()->load('mbl')), 'Container updated successfully');
     }
 
     /**
@@ -74,7 +75,7 @@ class ContainerController extends Controller
      */
     public function destroy(string $uuid): JsonResponse
     {
-        $container = Container::where('uuid', $uuid)->first();
+        $container = Container::find($uuid);
 
         if (! $container) {
             return $this->notFound('Container not found');
@@ -90,7 +91,7 @@ class ContainerController extends Controller
      */
     public function filter(FilterContainerRequest $request): JsonResponse
     {
-        $query = Container::query();
+        $query = Container::with('mbl');
 
         if ($request->has('filters')) {
             $this->applyFilters($query, $request->input('filters', []));
@@ -110,9 +111,9 @@ class ContainerController extends Controller
      */
     public function active(Request $request): JsonResponse
     {
-        $query = Container::query()
-            ->whereNotNull('vessel_uuid')
-            ->where('status', '!=', 'delivered');
+        $query = Container::with('mbl')
+            ->whereNotNull('vessel_id')
+            ->where('status', '!=', 'EMPTY_RETURNED');
 
         $this->applySorting($query, $request->input('order_by', 'eta'), (int) $request->input('direction', 1));
 
@@ -124,7 +125,8 @@ class ContainerController extends Controller
      */
     public function notTracking(Request $request): JsonResponse
     {
-        $query = Container::query()->where('is_tracking', false);
+        $query = Container::with('mbl')
+            ->where('status', 'NOT_TRACKING');
 
         $this->applySorting($query, $request->input('order_by', 'created_at'), (int) $request->input('direction', -1));
 
@@ -136,7 +138,7 @@ class ContainerController extends Controller
      */
     public function droppedMbl(Request $request): JsonResponse
     {
-        $query = Container::query()->whereNull('mbl_uuid');
+        $query = Container::with('mbl')->whereNull('mbl_id');
 
         $this->applySorting($query, $request->input('order_by', 'created_at'), (int) $request->input('direction', -1));
 
@@ -176,17 +178,17 @@ class ContainerController extends Controller
      */
     public function updatePriority(Request $request, string $uuid): JsonResponse
     {
-        $container = Container::where('uuid', $uuid)->first();
+        $container = Container::find($uuid);
 
         if (! $container) {
             return $this->notFound('Container not found');
         }
 
-        $request->validate(['priority' => 'required|in:low,normal,high,critical']);
+        $request->validate(['priority' => 'required|boolean']);
 
-        $container->update(['priority' => $request->input('priority')]);
+        $container->update(['is_priority' => $request->input('priority')]);
 
-        return $this->success(new ContainerResource($container->fresh()), 'Priority updated');
+        return $this->success(new ContainerResource($container->fresh()->load('mbl')), 'Priority updated');
     }
 
     /**
@@ -194,7 +196,7 @@ class ContainerController extends Controller
      */
     public function outgate(Request $request, string $uuid): JsonResponse
     {
-        $container = Container::where('uuid', $uuid)->first();
+        $container = Container::find($uuid);
 
         if (! $container) {
             return $this->notFound('Container not found');
@@ -210,10 +212,10 @@ class ContainerController extends Controller
             'outgate_date'  => $request->input('outgate_date'),
             'trucker_name'  => $request->input('trucker_name'),
             'license_plate' => $request->input('license_plate'),
-            'status'        => 'outgated',
+            'status'        => ContainerStatus::OUT_FOR_DELIVERY,
         ]);
 
-        return $this->success(new ContainerResource($container->fresh()), 'Container outgated');
+        return $this->success(new ContainerResource($container->fresh()->load('mbl')), 'Container outgated');
     }
 
     /**
@@ -221,7 +223,7 @@ class ContainerController extends Controller
      */
     public function emptyReturn(Request $request, string $uuid): JsonResponse
     {
-        $container = Container::where('uuid', $uuid)->first();
+        $container = Container::find($uuid);
 
         if (! $container) {
             return $this->notFound('Container not found');
@@ -234,11 +236,10 @@ class ContainerController extends Controller
 
         $container->update([
             'empty_return_date'     => $request->input('empty_return_date'),
-            'empty_return_location' => $request->input('empty_return_location'),
-            'status'                => 'empty_returned',
+            'status'                => ContainerStatus::EMPTY_RETURNED,
         ]);
 
-        return $this->success(new ContainerResource($container->fresh()), 'Empty return recorded');
+        return $this->success(new ContainerResource($container->fresh()->load('mbl')), 'Empty return recorded');
     }
 
     /**
@@ -246,7 +247,7 @@ class ContainerController extends Controller
      */
     public function locationHistory(string $uuid, Request $request): JsonResponse
     {
-        $container = Container::where('uuid', $uuid)->first();
+        $container = Container::find($uuid);
 
         if (! $container) {
             return $this->notFound('Container not found');

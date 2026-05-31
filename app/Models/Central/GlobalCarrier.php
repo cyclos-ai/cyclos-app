@@ -14,6 +14,8 @@ class GlobalCarrier extends Model
     protected $guarded = [];
 
     protected $casts = [
-        'tracking_supported' => 'boolean',
+        'supports_tracking' => 'boolean',
+        'is_active'         => 'boolean',
+        'aliases'           => 'array',
     ];
 }

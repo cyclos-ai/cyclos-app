@@ -29,7 +29,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->foreign('organization_id')->references('id')->on('organizations')->cascadeOnDelete();
-            $table->foreign('vessel_id')->references('id')->on('vessels')->nullOnDelete();
+            // Foreign key to vessels deferred — see 100045_add_deferred_foreign_keys.php
         });
     }
 

@@ -42,9 +42,7 @@ return new class extends Migration
             $table->softDeletes();
 
             $table->foreign('organization_id')->references('id')->on('organizations')->cascadeOnDelete();
-            $table->foreign('mbl_id')->references('id')->on('mbls')->nullOnDelete();
-            $table->foreign('booking_id')->references('id')->on('bookings')->nullOnDelete();
-            $table->foreign('vessel_id')->references('id')->on('vessels')->nullOnDelete();
+            // Foreign keys to mbls, bookings, vessels deferred — see 100045_add_deferred_foreign_keys.php
         });
     }
 

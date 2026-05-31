@@ -103,6 +103,7 @@ export const navigationGroups = [
         items: [
             { label: 'CSV Upload', icon: 'pi-upload', to: '/uploads/csv', name: 'uploads-csv', roles: ['shipper', 'admin'] },
             { label: 'Onboarding', icon: 'pi-user-plus', to: '/admin/onboarding', name: 'admin-onboarding', roles: ['admin'] },
+            { label: 'Carrier Management', icon: 'pi-truck', to: '/settings/carrier-management', name: 'settings-carrier-management', roles: ['shipper', 'admin'] },
             { label: 'Integrations', icon: 'pi-link', to: '/settings/carrier-integrations', name: 'settings-carrier-integrations', roles: ['shipper', 'admin'] },
             { label: 'Automations', icon: 'pi-bolt', to: '/settings/n8n', name: 'settings-n8n', roles: ['shipper', 'admin'] },
             { label: 'Settings', icon: 'pi-cog', to: '/settings', name: 'settings' },

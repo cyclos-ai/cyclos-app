@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cyclos.ai — Container Lifecycle Intelligence</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['DM Sans', 'system-ui', 'sans-serif'],
+            mono: ['DM Mono', 'ui-monospace', 'monospace'],
+          },
+          colors: {
+            teal: {
+              400: '#2dd4bf',
+              500: '#14b8a6',
+              600: '#0d9488',
+              700: '#0f766e',
+              800: '#115e59',
+              900: '#134e4a',
+            },
+          },
+          animation: {
+            'fade-up': 'fadeUp 0.6s ease-out forwards',
+            'fade-in': 'fadeIn 0.5s ease-out forwards',
+            'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          },
+          keyframes: {
+            fadeUp: {
+              '0%': { opacity: '0', transform: 'translateY(20px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+            fadeIn: {
+              '0%': { opacity: '0' },
+              '100%': { opacity: '1' },
+            },
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    /* Base */
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      background-color: #040d1a;
+      color: #e2e8f0;
+      font-family: 'DM Sans', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* Radial gradient background orbs */
+    .bg-orb-teal {
+      position: fixed;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(13,148,136,0.12) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .bg-orb-blue {
+      position: fixed;
+      width: 800px;
+      height: 800px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(30,58,138,0.15) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Noise texture overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.4;
+    }
+
+    /* Grid lines */
+    .grid-bg {
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(148,163,184,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148,163,184,0.025) 1px, transparent 1px);
+      background-size: 64px 64px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Portal cards */
+    .portal-card {
+      position: relative;
+      background: linear-gradient(135deg, rgba(15,23,42,0.9) 0%, rgba(8,15,30,0.95) 100%);
+      border: 1px solid rgba(148,163,184,0.08);
+      border-radius: 16px;
+      padding: 2rem;
+      cursor: pointer;
+      transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s ease, border-color 0.25s ease;
+      overflow: hidden;
+      text-decoration: none;
+      display: block;
+    }
+
+    .portal-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      padding: 1px;
+      background: linear-gradient(135deg, var(--card-accent-from), transparent 60%);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    .portal-card:hover {
+      transform: translateY(-6px) scale(1.01);
+    }
+
+    .portal-card:hover::before {
+      opacity: 1;
+    }
+
+    .portal-card-teal { --card-accent-from: rgba(13,148,136,0.6); }
+    .portal-card-teal:hover { box-shadow: 0 20px 60px rgba(13,148,136,0.18), 0 4px 16px rgba(0,0,0,0.4); border-color: rgba(13,148,136,0.25); }
+
+    .portal-card-amber { --card-accent-from: rgba(245,158,11,0.6); }
+    .portal-card-amber:hover { box-shadow: 0 20px 60px rgba(245,158,11,0.14), 0 4px 16px rgba(0,0,0,0.4); border-color: rgba(245,158,11,0.22); }
+
+    .portal-card-violet { --card-accent-from: rgba(124,58,237,0.6); }
+    .portal-card-violet:hover { box-shadow: 0 20px 60px rgba(124,58,237,0.16), 0 4px 16px rgba(0,0,0,0.4); border-color: rgba(124,58,237,0.22); }
+
+    /* Icon containers */
+    .icon-wrap {
+      width: 52px;
+      height: 52px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.25rem;
+      position: relative;
+    }
+    .icon-wrap::after {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: 13px;
+      border: 1px solid var(--icon-border);
+    }
+
+    .icon-teal   { background: rgba(13,148,136,0.15); --icon-border: rgba(13,148,136,0.3); }
+    .icon-amber  { background: rgba(245,158,11,0.12); --icon-border: rgba(245,158,11,0.28); }
+    .icon-violet { background: rgba(124,58,237,0.12); --icon-border: rgba(124,58,237,0.28); }
+
+    /* Wordmark */
+    .wordmark {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #ffffff 0%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .wordmark span {
+      background: linear-gradient(135deg, #0d9488 0%, #2dd4bf 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Tagline */
+    .tagline {
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #0d9488;
+    }
+
+    /* Badge */
+    .env-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.25rem 0.75rem;
+      background: rgba(13,148,136,0.08);
+      border: 1px solid rgba(13,148,136,0.2);
+      border-radius: 100px;
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: #2dd4bf;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .env-badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #0d9488;
+      box-shadow: 0 0 8px rgba(13,148,136,0.8);
+      animation: pulse 2.5s ease-in-out infinite;
+    }
+
+    /* API section */
+    .api-block {
+      background: rgba(8,15,30,0.7);
+      border: 1px solid rgba(148,163,184,0.08);
+      border-radius: 12px;
+      padding: 1.5rem 2rem;
+      backdrop-filter: blur(8px);
+    }
+
+    /* Credentials */
+    .cred-row {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      color: #64748b;
+      line-height: 1.6;
+    }
+    .cred-row strong {
+      color: #94a3b8;
+      font-weight: 500;
+    }
+
+    /* Divider */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(148,163,184,0.12) 30%, rgba(148,163,184,0.12) 70%, transparent);
+    }
+
+    /* Stagger animation delays */
+    .delay-100 { animation-delay: 0.1s; }
+    .delay-200 { animation-delay: 0.2s; }
+    .delay-300 { animation-delay: 0.3s; }
+    .delay-400 { animation-delay: 0.4s; }
+    .delay-500 { animation-delay: 0.5s; }
+    .delay-600 { animation-delay: 0.6s; }
+
+    .opacity-0-init { opacity: 0; }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid rgba(148,163,184,0.06);
+    }
+
+    /* Hover arrow on cards */
+    .card-arrow {
+      transition: transform 0.2s ease, opacity 0.2s ease;
+      opacity: 0.3;
+    }
+    .portal-card:hover .card-arrow {
+      transform: translateX(4px);
+      opacity: 0.7;
+    }
+
+    /* Link styles within card */
+    .portal-card-inner-link {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      margin-top: 1.25rem;
+    }
+    .link-teal   { color: #0d9488; }
+    .link-amber  { color: #f59e0b; }
+    .link-violet { color: #7c3aed; }
+  </style>
+</head>
+<body>
+
+  <!-- Background decorations -->
+  <div class="bg-orb-teal" style="top: -200px; right: -200px;"></div>
+  <div class="bg-orb-blue" style="bottom: -300px; left: -300px;"></div>
+  <div class="grid-bg"></div>
+
+  <!-- Main content wrapper -->
+  <div class="relative z-10 min-h-screen flex flex-col">
+
+    <!-- ─── Header / Nav bar ─── -->
+    <header class="px-6 py-5 flex items-center justify-between max-w-6xl mx-auto w-full opacity-0-init animate-fade-in">
+      <div class="flex items-center gap-3">
+        <!-- Inline SVG logo mark -->
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="32" height="32" rx="8" fill="#0d9488" fill-opacity="0.15"/>
+          <rect x="0.5" y="0.5" width="31" height="31" rx="7.5" stroke="#0d9488" stroke-opacity="0.4"/>
+          <!-- Container shape -->
+          <rect x="6" y="11" width="20" height="12" rx="2" stroke="#0d9488" stroke-width="1.5" fill="none"/>
+          <line x1="6" y1="16" x2="26" y2="16" stroke="#0d9488" stroke-width="1.5"/>
+          <line x1="13" y1="11" x2="13" y2="23" stroke="#0d9488" stroke-width="1"/>
+          <line x1="19" y1="11" x2="19" y2="23" stroke="#0d9488" stroke-width="1"/>
+          <!-- Wheels -->
+          <circle cx="10" cy="24" r="2" fill="#0d9488"/>
+          <circle cx="22" cy="24" r="2" fill="#0d9488"/>
+        </svg>
+        <span class="wordmark">Cyclos<span>.ai</span></span>
+      </div>
+      <div class="env-badge">Demo Environment</div>
+    </header>
+
+    <!-- ─── Hero ─── -->
+    <section class="flex-1 flex flex-col items-center justify-center px-6 pt-12 pb-8 text-center max-w-4xl mx-auto w-full">
+
+      <p class="tagline opacity-0-init animate-fade-up delay-100 mb-5">Container Lifecycle Intelligence</p>
+
+      <h1 class="opacity-0-init animate-fade-up delay-200 text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-tight mb-6"
+          style="background: linear-gradient(160deg, #f1f5f9 0%, #94a3b8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+        Real-time visibility<br/>
+        <span style="-webkit-text-fill-color: transparent; background: linear-gradient(135deg, #0d9488 0%, #2dd4bf 60%, #f1f5f9 100%); -webkit-background-clip: text; background-clip: text;">from port to door</span>
+      </h1>
+
+      <p class="opacity-0-init animate-fade-up delay-300 text-slate-400 text-base sm:text-lg max-w-xl leading-relaxed mb-12">
+        Cyclos.ai unifies container tracking, drayage coordination, and milestone management
+        into a single intelligent platform — giving every stakeholder live operational clarity.
+      </p>
+
+      <!-- ─── Portal Cards ─── -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 w-full max-w-5xl text-left">
+
+        <!-- Shipper Portal -->
+        <a href="./shipper.html" class="portal-card portal-card-teal opacity-0-init animate-fade-up delay-300">
+          <div class="icon-wrap icon-teal">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0d9488" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <!-- Ship hull -->
+              <path d="M3 17l1.5 3h15L21 17"/>
+              <!-- Container box on ship -->
+              <rect x="7" y="10" width="10" height="7" rx="1"/>
+              <line x1="7" y1="13.5" x2="17" y2="13.5"/>
+              <line x1="12" y1="10" x2="12" y2="17"/>
+              <!-- Mast -->
+              <line x1="12" y1="4" x2="12" y2="10"/>
+              <!-- Flag -->
+              <path d="M12 4 L17 6.5 L12 9"/>
+            </svg>
+          </div>
+
+          <h2 class="text-white font-semibold text-lg mb-1.5 tracking-tight">Shipper Portal</h2>
+          <p class="text-slate-400 text-sm leading-relaxed mb-4">
+            Track containers, manage MBLs, monitor ETAs — full supply chain visibility at a glance.
+          </p>
+
+          <div class="cred-row mb-1">
+            <strong>Email</strong>&nbsp;&nbsp;&nbsp;shipper@cyclos.ai
+          </div>
+          <div class="cred-row mb-4">
+            <strong>Pass&nbsp;&nbsp;</strong>&nbsp;&nbsp;&nbsp;password
+          </div>
+
+          <div class="portal-card-inner-link link-teal">
+            <span>Open portal</span>
+            <svg class="card-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </a>
+
+        <!-- Carrier Portal -->
+        <a href="./carrier.html" class="portal-card portal-card-amber opacity-0-init animate-fade-up delay-400">
+          <div class="icon-wrap icon-amber">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <!-- Truck cab -->
+              <path d="M1 3h13v13H1z" rx="1"/>
+              <!-- Trailer -->
+              <path d="M14 8h4l3 4v4h-7V8z"/>
+              <!-- Wheels -->
+              <circle cx="5.5" cy="18.5" r="2.5"/>
+              <circle cx="18.5" cy="18.5" r="2.5"/>
+              <!-- Window on cab -->
+              <rect x="3" y="5" width="5" height="4" rx="0.5"/>
+            </svg>
+          </div>
+
+          <h2 class="text-white font-semibold text-lg mb-1.5 tracking-tight">Carrier Portal</h2>
+          <p class="text-slate-400 text-sm leading-relaxed mb-4">
+            Manage drayage orders, fleet operations, and delivery scheduling from one dashboard.
+          </p>
+
+          <div class="cred-row mb-1">
+            <strong>Email</strong>&nbsp;&nbsp;&nbsp;carrier@cyclos.ai
+          </div>
+          <div class="cred-row mb-4">
+            <strong>Pass&nbsp;&nbsp;</strong>&nbsp;&nbsp;&nbsp;password
+          </div>
+
+          <div class="portal-card-inner-link link-amber">
+            <span>Open portal</span>
+            <svg class="card-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </a>
+
+        <!-- Admin Portal -->
+        <a href="./admin.html" class="portal-card portal-card-violet opacity-0-init animate-fade-up delay-500 sm:col-span-2 lg:col-span-1">
+          <div class="icon-wrap icon-violet">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <!-- Gear / cog -->
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M12 2a1 1 0 0 1 1 1v1.07A7.001 7.001 0 0 1 18.93 9H20a1 1 0 0 1 0 2h-1.07A7.001 7.001 0 0 1 14 17.93V19a1 1 0 0 1-2 0v-1.07A7.001 7.001 0 0 1 5.07 13H4a1 1 0 0 1 0-2h1.07A7.001 7.001 0 0 1 10 4.07V3a1 1 0 0 1 1-1h1z" fill="rgba(124,58,237,0.08)" stroke="#7c3aed"/>
+            </svg>
+          </div>
+
+          <h2 class="text-white font-semibold text-lg mb-1.5 tracking-tight">Admin Portal</h2>
+          <p class="text-slate-400 text-sm leading-relaxed mb-4">
+            System overview, carrier management, and integration configuration for operations teams.
+          </p>
+
+          <div class="cred-row mb-1">
+            <strong>Email</strong>&nbsp;&nbsp;&nbsp;admin@cyclos.ai
+          </div>
+          <div class="cred-row mb-4">
+            <strong>Pass&nbsp;&nbsp;</strong>&nbsp;&nbsp;&nbsp;password
+          </div>
+
+          <div class="portal-card-inner-link link-violet">
+            <span>Open portal</span>
+            <svg class="card-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </a>
+
+      </div>
+    </section>
+
+    <!-- ─── Divider ─── -->
+    <div class="max-w-5xl mx-auto w-full px-6">
+      <div class="divider opacity-0-init animate-fade-in delay-600"></div>
+    </div>
+
+    <!-- ─── API Section ─── -->
+    <section class="max-w-5xl mx-auto w-full px-6 py-10 opacity-0-init animate-fade-up delay-600">
+      <div class="api-block">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-5 sm:gap-10">
+
+          <div class="flex-1">
+            <div class="flex items-center gap-2.5 mb-3">
+              <div style="width:20px;height:20px;display:flex;align-items:center;justify-content:center;background:rgba(148,163,184,0.08);border-radius:5px;border:1px solid rgba(148,163,184,0.12);">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M1 6h10M4 2L1 6l3 4M8 2l3 4-3 4" stroke="#64748b" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <span class="text-slate-300 font-semibold text-sm tracking-tight">REST API</span>
+              <span class="text-xs font-mono px-1.5 py-0.5 rounded" style="background:rgba(13,148,136,0.1);color:#0d9488;border:1px solid rgba(13,148,136,0.2);">v1</span>
+            </div>
+            <p class="text-slate-500 text-sm leading-relaxed">
+              All portals communicate with the same backend API. Responses are JSON. Include your auth token in the
+              <code class="text-slate-400 font-mono text-xs bg-slate-800/50 px-1 py-0.5 rounded">Authorization: Bearer &lt;token&gt;</code> header.
+            </p>
+          </div>
+
+          <div class="shrink-0 flex flex-col gap-2.5">
+            <div class="flex items-center gap-3">
+              <span class="text-slate-500 text-xs font-mono uppercase tracking-widest w-16">Base URL</span>
+              <code class="font-mono text-sm text-teal-400 bg-slate-900/60 px-3 py-1.5 rounded-lg border border-slate-800">/api/v1</code>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-slate-500 text-xs font-mono uppercase tracking-widest w-16">Auth</span>
+              <code class="font-mono text-sm text-slate-400 bg-slate-900/60 px-3 py-1.5 rounded-lg border border-slate-800">Bearer token</code>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-slate-500 text-xs font-mono uppercase tracking-widest w-16">Format</span>
+              <code class="font-mono text-sm text-slate-400 bg-slate-900/60 px-3 py-1.5 rounded-lg border border-slate-800">JSON</code>
+            </div>
+          </div>
+
+          <a href="./api.html"
+             class="mt-4 sm:mt-0 shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all"
+             style="color:#0d9488;border:1px solid rgba(13,148,136,0.3);background:rgba(13,148,136,0.06);"
+             onmouseover="this.style.background='rgba(13,148,136,0.15)'"
+             onmouseout="this.style.background='rgba(13,148,136,0.06)'">
+            Open API Explorer
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5.25 3.5L9.25 7l-4 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── Footer ─── -->
+    <footer class="px-6 py-6">
+      <div class="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div class="flex items-center gap-2.5">
+          <svg width="16" height="16" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="32" height="32" rx="8" fill="#0d9488" fill-opacity="0.12"/>
+            <rect x="0.5" y="0.5" width="31" height="31" rx="7.5" stroke="#0d9488" stroke-opacity="0.3"/>
+            <rect x="6" y="11" width="20" height="12" rx="2" stroke="#0d9488" stroke-width="1.5" fill="none"/>
+            <line x1="6" y1="16" x2="26" y2="16" stroke="#0d9488" stroke-width="1.5"/>
+            <line x1="13" y1="11" x2="13" y2="23" stroke="#0d9488" stroke-width="1"/>
+            <line x1="19" y1="11" x2="19" y2="23" stroke="#0d9488" stroke-width="1"/>
+            <circle cx="10" cy="24" r="2" fill="#0d9488"/>
+            <circle cx="22" cy="24" r="2" fill="#0d9488"/>
+          </svg>
+          <span class="text-slate-500 text-sm">Powered by <span class="text-slate-400 font-medium">Cyclos.ai</span></span>
+        </div>
+        <div class="flex items-center gap-4">
+          <span class="text-slate-600 text-xs font-mono">demo environment</span>
+          <span class="text-slate-700 text-xs">·</span>
+          <span class="text-slate-600 text-xs" id="footer-year">2024</span>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+  <script>
+    // Update footer year
+    document.getElementById('footer-year').textContent = new Date().getFullYear();
+
+    // Trigger staggered animations on load
+    document.addEventListener('DOMContentLoaded', () => {
+      // Elements already have the animation classes applied via CSS
+      // Remove opacity-0-init after animation completes to ensure final state is visible
+      const animated = document.querySelectorAll('.opacity-0-init');
+      animated.forEach(el => {
+        el.addEventListener('animationend', () => {
+          el.style.opacity = '1';
+          el.classList.remove('opacity-0-init');
+        }, { once: true });
+      });
+    });
+
+    // Subtle parallax on background orbs
+    document.addEventListener('mousemove', (e) => {
+      const orbs = document.querySelectorAll('.bg-orb-teal, .bg-orb-blue');
+      const x = (e.clientX / window.innerWidth - 0.5) * 30;
+      const y = (e.clientY / window.innerHeight - 0.5) * 30;
+      orbs.forEach((orb, i) => {
+        const factor = i === 0 ? 1 : -0.6;
+        orb.style.transform = `translate(${x * factor}px, ${y * factor}px)`;
+      });
+    });
+  </script>
+</body>
+</html>

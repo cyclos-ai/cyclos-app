@@ -29,9 +29,10 @@ class User extends Authenticatable
 
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'last_login_at' => 'datetime',
-        'is_active' => 'boolean',
-        'password' => 'hashed',
+        'last_login_at'     => 'datetime',
+        'token_created_at'  => 'datetime',
+        'is_active'         => 'boolean',
+        'password'          => 'hashed',
     ];
 
     public function tenant(): BelongsTo

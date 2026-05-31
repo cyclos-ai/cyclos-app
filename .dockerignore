@@ -1,0 +1,64 @@
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# Node
+node_modules
+
+# PHP vendor (installed fresh in Docker)
+vendor
+
+# Laravel env files (injected at runtime)
+.env
+.env.*
+!.env.example
+
+# Built frontend assets (re-built in Docker)
+public/build
+public/hot
+
+# Storage (mounted as a volume)
+storage/app/public/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/testing/*
+storage/framework/views/*
+storage/logs/*
+
+# Bootstrap cache (regenerated at runtime)
+bootstrap/cache/*.php
+
+# Tests
+tests
+phpunit.xml
+.phpunit.result.cache
+
+# Development / IDE
+.vscode
+.idea
+*.code-workspace
+.editorconfig
+.php-cs-fixer.php
+phpstan.neon
+psalm.xml
+
+# Docker files themselves (avoid recursive copy confusion)
+docker-compose*.yml
+docker-compose*.override.yml
+
+# Documentation
+README.md
+CHANGELOG.md
+CONTRIBUTING.md
+LICENSE
+
+# CI/CD
+.github
+.circleci
+.travis.yml
+Jenkinsfile
+
+# OS
+.DS_Store
+Thumbs.db

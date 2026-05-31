@@ -48,7 +48,6 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::middleware(['auth:api', 'throttle:api'])
-    ->prefix('api/v1')
     ->name('api.v1.')
     ->group(function () {
 
@@ -503,5 +502,42 @@ Route::middleware(['auth:api', 'throttle:api'])
             Route::post('drayage-orders/{uuid}/accept',             [TruckHubIntegrationController::class, 'acceptDrayageOrder'])->name('drayage-orders.accept');
             Route::post('drayage-orders/{uuid}/update',             [TruckHubIntegrationController::class, 'updateDrayageStep'])->name('drayage-orders.update');
             Route::get('webhook-config',                            [TruckHubIntegrationController::class, 'webhookConfig'])->name('webhook-config');
+        });
+
+        // ----------------------------------------------------------------
+        // JSONCargo Container & Vessel Tracking API (shared)
+        // ----------------------------------------------------------------
+        Route::prefix('jsoncargo')->name('jsoncargo.')->group(function () {
+            // Meta
+            Route::get('status',                [\App\Http\Controllers\Api\V1\JsonCargo\JsonCargoController::class, 'status'])->name('status');
+            Route::get('stats',                 [\App\Http\Controllers\Api\V1\JsonCargo\JsonCargoController::class, 'apiKeyStats'])->name('stats');
+
+            // Container tracking
+            Route::post('containers/batch',     [\App\Http\Controllers\Api\V1\JsonCargo\JsonCargoController::class, 'containerBatch'])->name('containers.batch');
+            Route::get('containers/bol/{bol}',  [\App\Http\Controllers\Api\V1\JsonCargo\JsonCargoController::class, 'containersByBol'])->name('containers.bol');
+            Route::get('containers/{tracking}', [\App\Http\Controllers\Api\V1\JsonCargo\JsonCargoController::class, 'containerDetails'])->name('containers.show');
+            Route::post('containers/{tracking}/refresh', [\App\Http\Controllers\Api\V1\JsonCargo\JsonCargoController::class, 'refreshContainer'])->name('containers.refresh');
+
+            // Vessel tracking
+            Route::get('vessels/basic',         [\App\Http\Controllers\Api\V1\JsonCargo\JsonCargoController::class, 'vesselBasic'])->name('vessels.basic');
+            Route::get('vessels/pro',           [\App\Http\Controllers\Api\V1\JsonCargo\JsonCargoController::class, 'vesselPro'])->name('vessels.pro');
+            Route::get('vessels/bulk',          [\App\Http\Controllers\Api\V1\JsonCargo\JsonCargoController::class, 'vesselBulk'])->name('vessels.bulk');
+            Route::get('vessels/find',          [\App\Http\Controllers\Api\V1\JsonCargo\JsonCargoController::class, 'vesselFinder'])->name('vessels.find');
+            Route::get('vessels/specs',         [\App\Http\Controllers\Api\V1\JsonCargo\JsonCargoController::class, 'vesselSpecs'])->name('vessels.specs');
+
+            // Port & Terminal
+            Route::get('ports/find',            [\App\Http\Controllers\Api\V1\JsonCargo\JsonCargoController::class, 'portFinder'])->name('ports.find');
+            Route::get('terminals/find',        [\App\Http\Controllers\Api\V1\JsonCargo\JsonCargoController::class, 'terminalFinder'])->name('terminals.find');
+        });
+
+        // ----------------------------------------------------------------
+        // Carrier Onboarding (Shipper manages invites & carrier connections)
+        // ----------------------------------------------------------------
+        Route::prefix('carrier-onboarding')->name('carrier-onboarding.')->group(function () {
+            Route::get('carriers',          [\App\Http\Controllers\Api\V1\Carrier\CarrierOnboardingController::class, 'carriers'])->name('carriers.index');
+            Route::get('carriers/{uuid}',   [\App\Http\Controllers\Api\V1\Carrier\CarrierOnboardingController::class, 'showCarrier'])->name('carriers.show');
+            Route::get('invites',           [\App\Http\Controllers\Api\V1\Carrier\CarrierOnboardingController::class, 'invites'])->name('invites.index');
+            Route::post('invites',          [\App\Http\Controllers\Api\V1\Carrier\CarrierOnboardingController::class, 'createInvite'])->name('invites.store');
+            Route::delete('invites/{uuid}', [\App\Http\Controllers\Api\V1\Carrier\CarrierOnboardingController::class, 'revokeInvite'])->name('invites.revoke');
         });
     });

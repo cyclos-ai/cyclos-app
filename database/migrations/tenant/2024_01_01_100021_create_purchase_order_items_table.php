@@ -21,7 +21,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->foreign('purchase_order_id')->references('id')->on('purchase_orders')->cascadeOnDelete();
-            $table->foreign('sku_id')->references('id')->on('skus')->nullOnDelete();
+            // Foreign key to skus deferred — see 100045_add_deferred_foreign_keys.php
         });
     }
 

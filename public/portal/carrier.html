@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cyclos.ai — Carrier Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            amber: {
+              400: '#fbbf24',
+              500: '#f59e0b',
+              600: '#d97706',
+            },
+            sidebar: '#1a1a2e',
+            'sidebar-hover': '#16213e',
+            'sidebar-active': '#0f3460',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Skeleton loader animation */
+    @keyframes shimmer {
+      0%   { background-position: -1000px 0; }
+      100% { background-position:  1000px 0; }
+    }
+    .skeleton {
+      background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+      background-size: 1000px 100%;
+      animation: shimmer 1.6s infinite linear;
+      border-radius: 4px;
+    }
+    /* Sidebar active highlight uses custom color */
+    .nav-active {
+      background-color: #0f3460;
+      border-left: 3px solid #f59e0b;
+    }
+    .nav-item {
+      border-left: 3px solid transparent;
+      transition: background-color 0.15s, border-color 0.15s;
+    }
+    .nav-item:hover:not(.nav-active) {
+      background-color: #16213e;
+    }
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+  </style>
+</head>
+<body class="h-full bg-gray-50 font-sans antialiased">
+
+<!-- ================================================================
+     ERROR BANNER (shown on login failure)
+     ================================================================ -->
+<div id="error-banner" class="hidden fixed top-0 left-0 right-0 z-50 bg-red-600 text-white text-sm px-4 py-3 flex items-center justify-between shadow-md">
+  <div class="flex items-center gap-2">
+    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M12 9v2m0 4h.01M10.293 4.293a1 1 0 011.414 0l7 7a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7a1 1 0 010-1.414l7-7z"/>
+    </svg>
+    <span id="error-banner-msg">Authentication failed. Unable to connect to the API.</span>
+  </div>
+  <button onclick="document.getElementById('error-banner').classList.add('hidden')"
+    class="text-white/80 hover:text-white ml-4">✕</button>
+</div>
+
+<!-- ================================================================
+     LAYOUT WRAPPER
+     ================================================================ -->
+<div class="flex h-full min-h-screen">
+
+  <!-- ==============================================================
+       SIDEBAR
+       ============================================================== -->
+  <aside class="w-64 flex-shrink-0 flex flex-col" style="background-color:#1a1a2e;">
+
+    <!-- Brand -->
+    <div class="px-6 py-5 border-b border-white/10">
+      <div class="flex items-center gap-2">
+        <!-- Logo mark -->
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center"
+             style="background-color:#f59e0b;">
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+          </svg>
+        </div>
+        <div>
+          <p class="text-white font-bold text-sm leading-tight">Cyclos.ai</p>
+          <p class="text-white/40 text-xs leading-tight">Carrier Portal</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Auth status pill -->
+    <div class="px-4 py-3 border-b border-white/10">
+      <div id="auth-status-pill"
+           class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 text-xs">
+        <span id="auth-dot" class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
+        <span id="auth-label" class="text-white/60">Connecting…</span>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1 px-2 py-4 space-y-0.5 overflow-y-auto">
+
+      <button onclick="setActiveNav(this, 'dashboard')"
+        class="nav-item nav-active w-full flex items-center gap-3 px-4 py-2.5 rounded text-sm text-white/90 font-medium text-left">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+        </svg>
+        Dashboard
+      </button>
+
+      <button onclick="setActiveNav(this, 'orders')"
+        class="nav-item w-full flex items-center gap-3 px-4 py-2.5 rounded text-sm text-white/60 hover:text-white/90 text-left">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        </svg>
+        My Drayage Orders
+      </button>
+
+      <button onclick="setActiveNav(this, 'available')"
+        class="nav-item w-full flex items-center gap-3 px-4 py-2.5 rounded text-sm text-white/60 hover:text-white/90 text-left">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+        </svg>
+        Available Loads
+      </button>
+
+      <button onclick="setActiveNav(this, 'containers')"
+        class="nav-item w-full flex items-center gap-3 px-4 py-2.5 rounded text-sm text-white/60 hover:text-white/90 text-left">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+        </svg>
+        Containers
+      </button>
+
+      <button onclick="setActiveNav(this, 'fleet')"
+        class="nav-item w-full flex items-center gap-3 px-4 py-2.5 rounded text-sm text-white/60 hover:text-white/90 text-left">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        Fleet / Drivers
+      </button>
+
+      <button onclick="setActiveNav(this, 'invoices')"
+        class="nav-item w-full flex items-center gap-3 px-4 py-2.5 rounded text-sm text-white/60 hover:text-white/90 text-left">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        Invoices
+      </button>
+
+      <button onclick="setActiveNav(this, 'settings')"
+        class="nav-item w-full flex items-center gap-3 px-4 py-2.5 rounded text-sm text-white/60 hover:text-white/90 text-left">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        Settings
+      </button>
+    </nav>
+
+    <!-- Footer sidebar -->
+    <div class="px-4 py-4 border-t border-white/10">
+      <p class="text-white/25 text-xs text-center">v1.0 · Cyclos.ai</p>
+    </div>
+  </aside>
+
+  <!-- ==============================================================
+       MAIN CONTENT
+       ============================================================== -->
+  <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+    <!-- HEADER -->
+    <header class="flex-shrink-0 bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between shadow-sm z-10">
+      <div class="flex items-center gap-3">
+        <!-- Mobile menu toggle (visual only for now) -->
+        <button class="lg:hidden text-gray-400 hover:text-gray-600">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+        <div>
+          <h1 class="text-base font-semibold text-gray-900">Cyclos.ai — Carrier Portal</h1>
+          <p class="text-xs text-gray-400 hidden sm:block">Drayage Management Dashboard</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <!-- User info -->
+        <div class="hidden sm:flex items-center gap-2">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
+               style="background-color:#f59e0b;">CD</div>
+          <div class="hidden md:block">
+            <p class="text-xs font-medium text-gray-800 leading-tight">Carrier Dispatcher</p>
+            <p class="text-xs text-gray-400 leading-tight">drayage_dispatcher</p>
+          </div>
+        </div>
+        <!-- Open Full App -->
+        <a href="http://demo.localhost:8000/"
+           class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white rounded-md transition-colors"
+           style="background-color:#f59e0b;"
+           onmouseover="this.style.backgroundColor='#d97706'"
+           onmouseout="this.style.backgroundColor='#f59e0b'">
+          Open Full App
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+          </svg>
+        </a>
+      </div>
+    </header>
+
+    <!-- SCROLLABLE CONTENT AREA -->
+    <main class="flex-1 overflow-y-auto p-6 space-y-6">
+
+      <!-- Page title row -->
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-xl font-bold text-gray-900">Dashboard</h2>
+          <p class="text-sm text-gray-500 mt-0.5">Overview of your drayage operations</p>
+        </div>
+        <button onclick="refreshDashboard()"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
+          <svg id="refresh-icon" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          Refresh
+        </button>
+      </div>
+
+      <!-- ============================================================
+           STATS CARDS
+           ============================================================ -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+
+        <!-- Assigned Orders -->
+        <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+          <div class="flex items-center justify-between mb-3">
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Assigned Orders</p>
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center"
+                 style="background-color:#fff7ed;">
+              <svg class="w-4 h-4" style="color:#f59e0b;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+              </svg>
+            </div>
+          </div>
+          <div id="stat-total" class="skeleton h-8 w-16 rounded"></div>
+          <p class="text-xs text-gray-400 mt-1">All time</p>
+        </div>
+
+        <!-- Pending Pickup -->
+        <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+          <div class="flex items-center justify-between mb-3">
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Pending Pickup</p>
+            <div class="w-8 h-8 rounded-lg bg-yellow-50 flex items-center justify-center">
+              <svg class="w-4 h-4 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+          </div>
+          <div id="stat-pending" class="skeleton h-8 w-16 rounded"></div>
+          <p class="text-xs text-gray-400 mt-1">Awaiting pickup</p>
+        </div>
+
+        <!-- In Transit -->
+        <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+          <div class="flex items-center justify-between mb-3">
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">In Transit</p>
+            <div class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center">
+              <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M13 10V3L4 14h7v7l9-11h-7z"/>
+              </svg>
+            </div>
+          </div>
+          <div id="stat-transit" class="skeleton h-8 w-16 rounded"></div>
+          <p class="text-xs text-gray-400 mt-1">Currently moving</p>
+        </div>
+
+        <!-- Completed Today -->
+        <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+          <div class="flex items-center justify-between mb-3">
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Completed Today</p>
+            <div class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+              <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+          </div>
+          <p id="stat-completed" class="text-2xl font-bold text-gray-900">—</p>
+          <p class="text-xs text-gray-400 mt-1">Today</p>
+        </div>
+
+      </div>
+
+      <!-- ============================================================
+           BOTTOM TWO-COLUMN: Table + Quick Actions
+           ============================================================ -->
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+        <!-- Orders Table (spans 2 cols on xl) -->
+        <div class="xl:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-semibold text-gray-900">Drayage Orders</h3>
+              <p class="text-xs text-gray-400 mt-0.5">Latest 10 orders</p>
+            </div>
+            <a href="http://demo.localhost:8000/drayage/inbound"
+               class="text-xs font-medium hover:underline" style="color:#f59e0b;">
+              View all →
+            </a>
+          </div>
+
+          <!-- Table -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="bg-gray-50 border-b border-gray-100">
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Order #</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Container #</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Pickup</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">Delivery</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">Scheduled</th>
+                </tr>
+              </thead>
+              <tbody id="orders-tbody">
+                <!-- Skeleton rows -->
+                <tr class="border-b border-gray-50" id="skeleton-rows">
+                  <td colspan="6" class="px-4 py-3">
+                    <div class="space-y-3">
+                      <div class="skeleton h-4 w-full rounded"></div>
+                      <div class="skeleton h-4 w-5/6 rounded"></div>
+                      <div class="skeleton h-4 w-4/6 rounded"></div>
+                      <div class="skeleton h-4 w-full rounded"></div>
+                      <div class="skeleton h-4 w-3/4 rounded"></div>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Empty / error state -->
+          <div id="orders-empty" class="hidden px-5 py-10 text-center">
+            <svg class="w-10 h-10 text-gray-200 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2"/>
+            </svg>
+            <p class="text-sm text-gray-400">No orders found</p>
+          </div>
+        </div>
+
+        <!-- Quick Actions (1 col on xl) -->
+        <div class="space-y-4">
+
+          <!-- Quick Actions Card -->
+          <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
+            <div class="px-5 py-4 border-b border-gray-100">
+              <h3 class="text-sm font-semibold text-gray-900">Quick Actions</h3>
+            </div>
+            <div class="p-4 space-y-2">
+
+              <a href="http://demo.localhost:8000/drayage/inbound"
+                 class="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-white rounded-lg transition-colors"
+                 style="background-color:#f59e0b;"
+                 onmouseover="this.style.backgroundColor='#d97706'"
+                 onmouseout="this.style.backgroundColor='#f59e0b'">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                </svg>
+                View All Orders
+              </a>
+
+              <button onclick="alert('Update Order Status — connect to /api/v1/import-drayage/{uuid}')"
+                class="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-gray-700 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
+                <svg class="w-4 h-4 flex-shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                </svg>
+                Update Order Status
+              </button>
+
+              <a href="http://demo.localhost:8000/drayage-invoices"
+                 class="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-gray-700 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
+                <svg class="w-4 h-4 flex-shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                View Invoices
+              </a>
+
+            </div>
+          </div>
+
+          <!-- Status Legend Card -->
+          <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
+            <div class="px-5 py-4 border-b border-gray-100">
+              <h3 class="text-sm font-semibold text-gray-900">Status Guide</h3>
+            </div>
+            <div class="p-4 space-y-2">
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">PENDING</span>
+                <span class="text-xs text-gray-400">Awaiting assignment</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">DISPATCHED</span>
+                <span class="text-xs text-gray-400">Driver assigned</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">PICKED UP</span>
+                <span class="text-xs text-gray-400">Container picked up</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">IN TRANSIT</span>
+                <span class="text-xs text-gray-400">En route to delivery</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">DELIVERED</span>
+                <span class="text-xs text-gray-400">Delivered to consignee</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">COMPLETED</span>
+                <span class="text-xs text-gray-400">Fully complete</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="flex-shrink-0 bg-white border-t border-gray-200 px-6 py-3">
+      <p class="text-xs text-gray-400 text-center">
+        Powered by <span class="font-semibold" style="color:#f59e0b;">Cyclos.ai</span> — Drayage Management
+      </p>
+    </footer>
+  </div><!-- /main content -->
+</div><!-- /layout -->
+
+<!-- ================================================================
+     JAVASCRIPT
+     ================================================================ -->
+<script>
+  // ----------------------------------------------------------------
+  // State
+  // ----------------------------------------------------------------
+  let authToken = null;
+  const API_BASE = '/api/v1';
+
+  // Pending pickup statuses (adjust if API uses different casing)
+  const PENDING_STATUSES   = ['pending', 'pending_pickup', 'PENDING', 'PENDING_PICKUP'];
+  const TRANSIT_STATUSES   = ['in_transit', 'dispatched', 'picked_up', 'IN_TRANSIT', 'DISPATCHED', 'PICKED_UP'];
+
+  // ----------------------------------------------------------------
+  // Utility: show error banner
+  // ----------------------------------------------------------------
+  function showError(msg) {
+    const banner = document.getElementById('error-banner');
+    document.getElementById('error-banner-msg').textContent = msg;
+    banner.classList.remove('hidden');
+    // Push content down so banner doesn't overlap header
+    document.body.style.paddingTop = banner.offsetHeight + 'px';
+  }
+
+  // ----------------------------------------------------------------
+  // Utility: status badge HTML
+  // ----------------------------------------------------------------
+  function statusBadge(status) {
+    const s = (status || '').toUpperCase().replace(/_/g, ' ');
+    const map = {
+      'PENDING':        'bg-yellow-100 text-yellow-800',
+      'PENDING PICKUP': 'bg-yellow-100 text-yellow-800',
+      'DISPATCHED':     'bg-blue-100 text-blue-800',
+      'PICKED UP':      'bg-purple-100 text-purple-800',
+      'IN TRANSIT':     'bg-indigo-100 text-indigo-800',
+      'DELIVERED':      'bg-green-100 text-green-800',
+      'COMPLETED':      'bg-emerald-100 text-emerald-800',
+    };
+    const cls = map[s] || 'bg-gray-100 text-gray-600';
+    return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${cls}">${s || '—'}</span>`;
+  }
+
+  // ----------------------------------------------------------------
+  // Utility: safe field accessor
+  // ----------------------------------------------------------------
+  function safe(val) {
+    return (val !== null && val !== undefined && val !== '') ? val : '—';
+  }
+
+  // ----------------------------------------------------------------
+  // Utility: format date
+  // ----------------------------------------------------------------
+  function fmtDate(val) {
+    if (!val) return '—';
+    try {
+      return new Date(val).toLocaleDateString('en-US', {
+        month: 'short', day: 'numeric', year: 'numeric'
+      });
+    } catch (_) { return val; }
+  }
+
+  // ----------------------------------------------------------------
+  // Auth: auto-login
+  // ----------------------------------------------------------------
+  async function doLogin() {
+    try {
+      const res = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Tenant': 'demo' },
+        body: JSON.stringify({ email: 'carrier@cyclos.ai', password: 'password' })
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.message || `Login failed (HTTP ${res.status})`);
+      }
+
+      const data = await res.json();
+      // Try common token field names
+      authToken = data.token || data.access_token || data.data?.token || null;
+
+      if (!authToken) throw new Error('No token returned from login endpoint.');
+
+      // Update auth pill
+      document.getElementById('auth-dot').className  = 'w-2 h-2 rounded-full bg-green-400';
+      document.getElementById('auth-label').textContent = 'Connected';
+      document.getElementById('auth-label').className   = 'text-green-300 text-xs';
+
+      return true;
+    } catch (err) {
+      document.getElementById('auth-dot').className  = 'w-2 h-2 rounded-full bg-red-400';
+      document.getElementById('auth-label').textContent = 'Auth failed';
+      document.getElementById('auth-label').className   = 'text-red-400 text-xs';
+      showError(`Authentication failed: ${err.message}`);
+      return false;
+    }
+  }
+
+  // ----------------------------------------------------------------
+  // API helper
+  // ----------------------------------------------------------------
+  async function apiFetch(path) {
+    const headers = { 'Accept': 'application/json', 'X-Tenant': 'demo' };
+    if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+    const res = await fetch(`${API_BASE}${path}`, { headers });
+    if (!res.ok) throw new Error(`API ${path} → HTTP ${res.status}`);
+    return res.json();
+  }
+
+  // ----------------------------------------------------------------
+  // Render stat number (replaces skeleton)
+  // ----------------------------------------------------------------
+  function renderStat(id, value) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.className = 'text-2xl font-bold text-gray-900';
+    el.textContent = (value !== null && value !== undefined) ? value : '—';
+  }
+
+  // ----------------------------------------------------------------
+  // Load stats
+  // ----------------------------------------------------------------
+  async function loadStats() {
+    try {
+      // Fetch page_size=1 just to get meta.total
+      const data = await apiFetch('/import-drayage?page_num=0&page_size=1');
+      const total = data?.meta?.total ?? data?.data?.length ?? '—';
+      renderStat('stat-total', total);
+    } catch (_) {
+      renderStat('stat-total', '—');
+    }
+
+    // Fetch larger set to compute pending / in-transit counts
+    try {
+      const data = await apiFetch('/import-drayage?page_num=0&page_size=100');
+      const orders = data?.data ?? data?.orders ?? [];
+
+      let pending = 0;
+      let transit  = 0;
+      orders.forEach(o => {
+        const st = (o.status || '').toLowerCase();
+        if (PENDING_STATUSES.some(p => p.toLowerCase() === st)) pending++;
+        if (TRANSIT_STATUSES.some(t => t.toLowerCase() === st)) transit++;
+      });
+
+      renderStat('stat-pending', pending);
+      renderStat('stat-transit', transit);
+    } catch (_) {
+      renderStat('stat-pending', '—');
+      renderStat('stat-transit', '—');
+    }
+  }
+
+  // ----------------------------------------------------------------
+  // Load orders table
+  // ----------------------------------------------------------------
+  async function loadOrders() {
+    try {
+      const data = await apiFetch('/import-drayage?page_num=0&page_size=10');
+      const orders = data?.data ?? data?.orders ?? [];
+
+      const tbody = document.getElementById('orders-tbody');
+
+      if (!orders.length) {
+        tbody.innerHTML = '';
+        document.getElementById('orders-empty').classList.remove('hidden');
+        return;
+      }
+
+      tbody.innerHTML = orders.map(o => {
+        // Try various field name conventions from the API
+        const orderNum   = safe(o.order_number ?? o.reference_number ?? o.uuid?.substring(0,8));
+        const containerN = safe(o.container?.container_number ?? o.container_number ?? o.container_id?.substring(0,8));
+        const pickup     = safe(o.pickup_location ?? o.origin ?? o.pickup_address ?? o.from);
+        const delivery   = safe(o.delivery_location ?? o.destination ?? o.delivery_address ?? o.to);
+        const scheduled  = fmtDate(o.scheduled_date ?? o.pickup_date ?? o.scheduled_at ?? o.eta);
+
+        return `
+          <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+            <td class="px-4 py-3 text-sm font-medium text-gray-900 whitespace-nowrap">${orderNum}</td>
+            <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">${containerN}</td>
+            <td class="px-4 py-3 whitespace-nowrap">${statusBadge(o.status)}</td>
+            <td class="px-4 py-3 text-sm text-gray-500 max-w-[180px] truncate hidden md:table-cell" title="${pickup}">${pickup}</td>
+            <td class="px-4 py-3 text-sm text-gray-500 max-w-[180px] truncate hidden lg:table-cell" title="${delivery}">${delivery}</td>
+            <td class="px-4 py-3 text-sm text-gray-500 whitespace-nowrap hidden lg:table-cell">${scheduled}</td>
+          </tr>
+        `;
+      }).join('');
+
+    } catch (err) {
+      document.getElementById('orders-tbody').innerHTML = `
+        <tr>
+          <td colspan="6" class="px-4 py-6 text-center">
+            <p class="text-sm text-red-500">Failed to load orders: ${err.message}</p>
+          </td>
+        </tr>
+      `;
+    }
+  }
+
+  // ----------------------------------------------------------------
+  // Refresh all dashboard data
+  // ----------------------------------------------------------------
+  async function refreshDashboard() {
+    const icon = document.getElementById('refresh-icon');
+    icon.classList.add('animate-spin');
+
+    // Reset skeletons
+    ['stat-total','stat-pending','stat-transit'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.className = 'skeleton h-8 w-16 rounded';
+        el.textContent = '';
+      }
+    });
+    document.getElementById('orders-empty').classList.add('hidden');
+    document.getElementById('orders-tbody').innerHTML = `
+      <tr><td colspan="6" class="px-4 py-3">
+        <div class="space-y-3">
+          <div class="skeleton h-4 w-full rounded"></div>
+          <div class="skeleton h-4 w-5/6 rounded"></div>
+          <div class="skeleton h-4 w-4/6 rounded"></div>
+          <div class="skeleton h-4 w-full rounded"></div>
+          <div class="skeleton h-4 w-3/4 rounded"></div>
+        </div>
+      </td></tr>
+    `;
+
+    await Promise.all([loadStats(), loadOrders()]);
+    icon.classList.remove('animate-spin');
+  }
+
+  // ----------------------------------------------------------------
+  // Sidebar nav toggle
+  // ----------------------------------------------------------------
+  function setActiveNav(el, _section) {
+    document.querySelectorAll('.nav-item').forEach(btn => {
+      btn.classList.remove('nav-active', 'text-white/90', 'font-medium');
+      btn.classList.add('text-white/60');
+    });
+    el.classList.add('nav-active', 'text-white/90', 'font-medium');
+    el.classList.remove('text-white/60');
+  }
+
+  // ----------------------------------------------------------------
+  // Bootstrap
+  // ----------------------------------------------------------------
+  (async function init() {
+    const ok = await doLogin();
+    if (ok) {
+      await refreshDashboard();
+    }
+  })();
+</script>
+
+</body>
+</html>

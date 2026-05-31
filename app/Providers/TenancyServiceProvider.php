@@ -72,7 +72,7 @@ class TenancyServiceProvider extends ServiceProvider
             if (file_exists(base_path('routes/tenant.php'))) {
                 \Illuminate\Support\Facades\Route::middleware([
                     'api',
-                    Middleware\InitializeTenancyBySubdomain::class,
+                    \App\Http\Middleware\InitializeTenancyBySubdomainOrHeader::class,
                     Middleware\PreventAccessFromCentralDomains::class,
                 ])->prefix('api/v1')
                   ->group(base_path('routes/tenant.php'));

@@ -13,6 +13,12 @@ return [
         ],
 
         'api' => [
+            'driver' => 'simple-token',
+            'provider' => 'users',
+        ],
+
+        // Passport guard kept for external OAuth2 API consumers
+        'api-oauth' => [
             'driver' => 'passport',
             'provider' => 'users',
         ],
@@ -35,4 +41,6 @@ return [
     ],
 
     'password_timeout' => 10800,
+
+    'token_ttl' => env('AUTH_TOKEN_TTL', 30),
 ];
