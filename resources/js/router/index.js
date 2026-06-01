@@ -273,6 +273,20 @@ const routes = [
                 component: () => import('@/views/map/MapView.vue'),
             },
 
+            // Rail
+            {
+                path: 'rail/map',
+                name: 'rail-map',
+                component: () => import('@/views/rail/RailMapView.vue'),
+                meta: { requiresAuth: true },
+            },
+            {
+                path: 'rail/shipments',
+                name: 'rail-shipments',
+                component: () => import('@/views/rail/RailShipmentListView.vue'),
+                meta: { requiresAuth: true },
+            },
+
             // Calendar
             {
                 path: 'calendar',

@@ -169,6 +169,17 @@ Route::middleware(['auth:api', 'throttle:api'])
             Route::get('carriers',                                  [RailController::class, 'carrierLookup'])->name('carriers');
             Route::get('milestones/container/{container_number}',   [RailController::class, 'milestonesByContainer'])->name('milestones.by-container');
             Route::get('milestones/{uuid}',                         [RailController::class, 'milestonesByUuid'])->name('milestones.show');
+
+            // Ramps
+            Route::get('ramps',             [RailController::class, 'ramps'])->name('ramps.index');
+            Route::get('ramps/{code}',      [RailController::class, 'rampDetail'])->name('ramps.show');
+
+            // Shipments
+            Route::get('shipments',                         [RailController::class, 'shipments'])->name('shipments.index');
+            Route::post('shipments',                        [RailController::class, 'storeShipment'])->name('shipments.store');
+            Route::get('shipments/{uuid}',                  [RailController::class, 'shipmentDetail'])->name('shipments.show');
+            Route::put('shipments/{uuid}',                  [RailController::class, 'updateShipment'])->name('shipments.update');
+            Route::patch('shipments/{uuid}/status',         [RailController::class, 'updateShipmentStatus'])->name('shipments.status');
         });
 
         // ----------------------------------------------------------------

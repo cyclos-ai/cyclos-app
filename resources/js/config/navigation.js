@@ -90,6 +90,14 @@ export const navigationGroups = [
         ],
     },
     {
+        label: 'Rail',
+        roles: ['shipper', 'admin'],
+        items: [
+            { label: 'Rail Map',       icon: 'pi-map',  to: '/rail/map',       name: 'rail-map' },
+            { label: 'Rail Shipments', icon: 'pi-list', to: '/rail/shipments', name: 'rail-shipments' },
+        ],
+    },
+    {
         label: 'Visibility',
         roles: ['shipper', 'admin'],
         items: [
