@@ -35,6 +35,7 @@ use App\Http\Controllers\Api\V1\TransitTime\TransitTimeController;
 use App\Http\Controllers\Api\V1\Vendor\VendorController;
 use App\Http\Controllers\Api\V1\Vessel\VesselController;
 use App\Http\Controllers\Api\V1\Volume\VolumeController;
+use App\Http\Controllers\Api\V1\Edi\EdiWebhookController;
 use App\Http\Controllers\Api\V1\Webhook\WebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -550,5 +551,25 @@ Route::middleware(['auth:api', 'throttle:api'])
             Route::get('invites',           [\App\Http\Controllers\Api\V1\Carrier\CarrierOnboardingController::class, 'invites'])->name('invites.index');
             Route::post('invites',          [\App\Http\Controllers\Api\V1\Carrier\CarrierOnboardingController::class, 'createInvite'])->name('invites.store');
             Route::delete('invites/{uuid}', [\App\Http\Controllers\Api\V1\Carrier\CarrierOnboardingController::class, 'revokeInvite'])->name('invites.revoke');
+        });
+    });
+
+// ----------------------------------------------------------------
+// EDI Webhooks (outside auth:api — authenticated via X-EDI-Key header)
+// The test and sample endpoints sit inside the auth:api group above,
+// but the inbound webhook from EDI providers uses a shared secret key.
+// ----------------------------------------------------------------
+Route::middleware(['throttle:api'])
+    ->prefix('edi')
+    ->name('api.v1.edi.')
+    ->group(function () {
+        // Inbound EDI 315 from carriers/EDI VAN — no auth:api, uses X-EDI-Key
+        Route::post('315', [EdiWebhookController::class, 'receive315'])
+            ->name('315.receive');
+
+        // Test and sample endpoints — require auth:api
+        Route::middleware(['auth:api'])->group(function () {
+            Route::post('315/test',   [EdiWebhookController::class, 'test315'])->name('315.test');
+            Route::get('315/sample',  [EdiWebhookController::class, 'sample315'])->name('315.sample');
         });
     });

@@ -57,4 +57,16 @@ return [
         'cache_ttl' => env('JSONCARGO_CACHE_TTL', 900), // 15 minutes default
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | EDI Webhook
+    |--------------------------------------------------------------------------
+    | Shared secret key for authenticating inbound EDI 315 messages from
+    | carriers and EDI value-added networks (VANs).
+    | Set EDI_WEBHOOK_KEY in .env to a long random string.
+    */
+    'edi' => [
+        'webhook_key' => env('EDI_WEBHOOK_KEY'),
+    ],
+
 ];
