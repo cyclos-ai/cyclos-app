@@ -96,4 +96,54 @@ return [
         'cache_ttl'=> (int) env('DATALASTIC_CACHE_TTL', 120),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Steamship Line Direct APIs (DCSA Track & Trace fallback)
+    |--------------------------------------------------------------------------
+    | Used when JSONCargo has no data for a container. Each carrier exposes a
+    | DCSA Track & Trace 2.x endpoint at GET {base_url}/events?equipmentReference=
+    |
+    | auth: 'oauth2'  — client-credentials grant (Maersk)
+    | auth: 'apikey'  — static key in Authorization/X-Api-Key headers
+    */
+    'carriers' => [
+        'maersk' => [
+            'scac'          => 'MAEU',
+            'name'          => 'Maersk',
+            'base_url'      => env('MAERSK_DCSA_URL'),
+            'auth'          => 'oauth2',
+            'client_id'     => env('MAERSK_CLIENT_ID'),
+            'client_secret' => env('MAERSK_CLIENT_SECRET'),
+            'token_url'     => env('MAERSK_TOKEN_URL'),
+        ],
+        'cma_cgm' => [
+            'scac'     => 'CMDU',
+            'name'     => 'CMA CGM',
+            'base_url' => env('CMA_CGM_DCSA_URL'),
+            'auth'     => 'apikey',
+            'api_key'  => env('CMA_CGM_API_KEY'),
+        ],
+        'hapag' => [
+            'scac'     => 'HLCU',
+            'name'     => 'Hapag-Lloyd',
+            'base_url' => env('HAPAG_DCSA_URL'),
+            'auth'     => 'apikey',
+            'api_key'  => env('HAPAG_API_KEY'),
+        ],
+        'one' => [
+            'scac'     => 'ONEY',
+            'name'     => 'Ocean Network Express',
+            'base_url' => env('ONE_DCSA_URL'),
+            'auth'     => 'apikey',
+            'api_key'  => env('ONE_API_KEY'),
+        ],
+        'zim' => [
+            'scac'     => 'ZIMU',
+            'name'     => 'ZIM',
+            'base_url' => env('ZIM_DCSA_URL'),
+            'auth'     => 'apikey',
+            'api_key'  => env('ZIM_API_KEY'),
+        ],
+    ],
+
 ];

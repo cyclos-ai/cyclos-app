@@ -138,13 +138,33 @@ class JsonCargoService
 
         $cacheKey = "jsoncargo_container_{$trackingNumber}_{$shippingLine}";
 
-        return $this->cache->remember($cacheKey, $this->cacheTtl, function () use ($trackingNumber, $shippingLine) {
-            $query = $shippingLine ? ['shipping_line' => $shippingLine] : [];
+        // Check cache first; do NOT use cache->remember() here so that error
+        // arrays are never persisted and are always passed through to the caller.
+        $cached = $this->cache->get($cacheKey);
+        if ($cached !== null) {
+            return $cached;
+        }
 
-            $response = $this->request('GET', "/containers/{$trackingNumber}", $query);
+        $query    = $shippingLine ? ['shipping_line' => $shippingLine] : [];
+        $response = $this->request('GET', "/containers/{$trackingNumber}", $query);
 
-            return $response ? ($response['data'] ?? null) : null;
-        });
+        // Pass error arrays back to the caller as-is so the multi-source
+        // chain can capture the real reason (e.g. 403 invalid key).
+        if ($response === null) {
+            return null;
+        }
+
+        if (isset($response['error'])) {
+            return $response; // error array — do NOT cache
+        }
+
+        $data = $response['data'] ?? null;
+
+        if ($data !== null) {
+            $this->cache->put($cacheKey, $data, $this->cacheTtl);
+        }
+
+        return $data;
     }
 
     /**

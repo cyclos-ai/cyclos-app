@@ -30,6 +30,7 @@ use App\Http\Controllers\Api\V1\Report\ReportController;
 use App\Http\Controllers\Api\V1\SKU\SKUController;
 use App\Http\Controllers\Api\V1\Terminal\TerminalController;
 use App\Http\Controllers\Api\V1\Carrier\CarrierController;
+use App\Http\Controllers\Api\V1\Tracking\MultiSourceTrackingController;
 use App\Http\Controllers\Api\V1\Tracking\TrackingRequestController;
 use App\Http\Controllers\Api\V1\TransitTime\TransitTimeController;
 use App\Http\Controllers\Api\V1\Vendor\VendorController;
@@ -526,6 +527,14 @@ Route::middleware(['auth:api', 'throttle:api'])
             Route::get('status',  [AisController::class, 'status'])->name('status');
             Route::get('vessels', [AisController::class, 'vessels'])->name('vessels');
             Route::get('vessel',  [AisController::class, 'vessel'])->name('vessel');
+        });
+
+        // ----------------------------------------------------------------
+        // Multi-Source Container Tracking (JSONCargo → DCSA fallback chain)
+        // ----------------------------------------------------------------
+        Route::prefix('tracking')->name('tracking.')->group(function () {
+            Route::get('container/{number}', [MultiSourceTrackingController::class, 'track'])->name('container');
+            Route::get('sources',            [MultiSourceTrackingController::class, 'sources'])->name('sources');
         });
 
         // ----------------------------------------------------------------
