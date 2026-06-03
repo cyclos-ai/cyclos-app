@@ -153,6 +153,12 @@ const routes = [
 
             // Tracking
             {
+                path: 'track',
+                name: 'track-container',
+                component: () => import('@/views/tracking/TrackContainerView.vue'),
+                meta: { requiresAuth: true },
+            },
+            {
                 path: 'tracking-requests',
                 name: 'tracking-requests',
                 component: () => import('@/views/tracking/TrackingRequestView.vue'),

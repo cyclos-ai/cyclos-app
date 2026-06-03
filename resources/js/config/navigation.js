@@ -58,6 +58,7 @@ export const navigationGroups = [
         label: 'Air & Tracking',
         roles: ['shipper', 'admin'],
         items: [
+            { label: 'Track Container', icon: 'pi-search',      to: '/track',            name: 'track-container' },
             { label: 'Air Shipments',   icon: 'pi-send',        to: '/air-shipments',    name: 'air-shipments' },
             { label: 'Tracking Requests', icon: 'pi-map-marker', to: '/tracking-requests', name: 'tracking-requests' },
             { label: 'Document Upload', icon: 'pi-file-import', to: '/documents/upload', name: 'documents-upload' },

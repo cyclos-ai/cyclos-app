@@ -388,8 +388,9 @@ class JsonCargoService
         }
 
         try {
-            $response = Http::timeout(15)
-                ->retry(2, 500)
+            $response = Http::timeout(8)
+                ->connectTimeout(5)
+                ->retry(1, 250)
                 ->withHeaders([
                     'x-api-key' => $this->apiKey,
                     'Accept'    => 'application/json',
