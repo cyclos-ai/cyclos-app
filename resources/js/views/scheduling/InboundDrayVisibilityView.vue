@@ -12,6 +12,12 @@
                 </div>
                 <div class="flex items-center gap-2 flex-shrink-0">
                     <Button
+                        label="New Drayage Move"
+                        icon="pi pi-plus"
+                        size="small"
+                        @click="showCreateDialog = true"
+                    />
+                    <Button
                         :label="selectionMode ? 'Cancel Selection' : 'Actions'"
                         :icon="selectionMode ? 'pi pi-times' : 'pi pi-bolt'"
                         :severity="selectionMode ? 'secondary' : 'success'"
@@ -87,6 +93,59 @@
 
         <!-- Toast for copy notification -->
         <Toast position="bottom-right" />
+
+        <!-- Create Drayage Move Dialog -->
+        <Dialog v-model:visible="showCreateDialog" header="New Drayage Move" modal class="w-[520px]">
+            <form @submit.prevent="submitCreateDrayage" class="space-y-4 pt-2">
+                <!-- OCR auto-fill panel -->
+                <div class="rounded-lg border border-dashed border-surface-300 bg-surface-50/50 p-3">
+                    <button
+                        type="button"
+                        class="flex w-full items-center gap-2 text-sm font-medium text-teal-600"
+                        @click="showDrayageOcr = !showDrayageOcr"
+                    >
+                        <i class="pi pi-file-import"></i>
+                        Auto-fill from document (optional)
+                        <i :class="showDrayageOcr ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" class="ml-auto text-xs"></i>
+                    </button>
+                    <div v-if="showDrayageOcr" class="mt-3">
+                        <DocumentDropZone @extracted="onDrayageExtracted" />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Container Number <span class="text-red-500">*</span></label>
+                        <InputText v-model="drayageForm.container_number" placeholder="MSCU1234567" class="w-full" />
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Delivery Location</label>
+                        <InputText v-model="drayageForm.delivery_location" placeholder="Final destination / DC address" class="w-full" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Scheduled Date</label>
+                        <DatePicker v-model="drayageForm.scheduled_drop_date" placeholder="Select date" class="w-full" date-format="mm/dd/yy" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">MBL Number</label>
+                        <InputText v-model="drayageForm.mbl_number" placeholder="MAEU123456789" class="w-full" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Ocean Carrier SCAC</label>
+                        <InputText v-model="drayageForm.ocean_carrier_scac" placeholder="MAEU" class="w-full" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Container Type</label>
+                        <InputText v-model="drayageForm.container_type" placeholder="40HC" class="w-full" />
+                    </div>
+                </div>
+                <Message v-if="createDrayageError" severity="error" :closable="false">{{ createDrayageError }}</Message>
+            </form>
+            <template #footer>
+                <Button label="Cancel" text @click="showCreateDialog = false" />
+                <Button label="Create Move" icon="pi pi-check" :loading="creatingDrayage" @click="submitCreateDrayage" />
+            </template>
+        </Dialog>
 
         <!-- DataTable -->
         <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -480,9 +539,11 @@
 <script setup>
 import { ref, reactive, computed, onMounted, defineComponent } from 'vue';
 import Button from 'primevue/button';
+import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
 import Select from 'primevue/select';
 import DatePicker from 'primevue/datepicker';
+import Message from 'primevue/message';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Menu from 'primevue/menu';
@@ -493,6 +554,7 @@ import dayjs from 'dayjs';
 import PageHeader from '@/components/PageHeader.vue';
 import StatCard from '@/components/StatCard.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
+import DocumentDropZone from '@/components/documents/DocumentDropZone.vue';
 import { useApi } from '@/composables/useApi';
 import api from '@/plugins/api';
 
@@ -579,6 +641,59 @@ const EditableCell = defineComponent({
 // ─── Main component logic ────────────────────────────────────────────────────
 const toast         = useToast();
 const { execute }   = useApi();
+
+// Create drayage move dialog
+const showCreateDialog  = ref(false);
+const showDrayageOcr    = ref(false);
+const creatingDrayage   = ref(false);
+const createDrayageError = ref('');
+const drayageForm = reactive({
+    container_number:   '',
+    delivery_location:  '',
+    scheduled_drop_date: null,
+    mbl_number:         '',
+    ocean_carrier_scac: '',
+    container_type:     '',
+});
+
+function onDrayageExtracted(data) {
+    if (data.container_numbers?.length) drayageForm.container_number = data.container_numbers[0];
+    if (data.final_destination) drayageForm.delivery_location = data.final_destination;
+    if (data.eta) drayageForm.scheduled_drop_date = new Date(data.eta);
+    if (data.mbl_number) drayageForm.mbl_number = data.mbl_number;
+    if (data.carrier_scac) drayageForm.ocean_carrier_scac = data.carrier_scac;
+    if (data.container_type) drayageForm.container_type = data.container_type;
+    showDrayageOcr.value = false;
+    createDrayageError.value = '';
+}
+
+async function submitCreateDrayage() {
+    if (!drayageForm.container_number.trim()) {
+        createDrayageError.value = 'Container number is required.';
+        return;
+    }
+    creatingDrayage.value = true;
+    createDrayageError.value = '';
+    try {
+        const payload = { ...drayageForm };
+        if (payload.scheduled_drop_date) {
+            payload.scheduled_drop_date = dayjs(payload.scheduled_drop_date).format('YYYY-MM-DD');
+        }
+        await api.post('/drayage', payload);
+        showCreateDialog.value = false;
+        Object.assign(drayageForm, {
+            container_number: '', delivery_location: '', scheduled_drop_date: null,
+            mbl_number: '', ocean_carrier_scac: '', container_type: '',
+        });
+        showDrayageOcr.value = false;
+        toast.add({ severity: 'success', summary: 'Created', detail: 'Drayage move created', life: 3000 });
+        await fetchRows();
+    } catch (err) {
+        createDrayageError.value = err.response?.data?.message || 'Failed to create drayage move.';
+    } finally {
+        creatingDrayage.value = false;
+    }
+}
 
 const topMenu        = ref(null);
 const loading        = ref(false);

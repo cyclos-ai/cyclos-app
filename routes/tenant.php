@@ -74,6 +74,7 @@ Route::middleware(['auth:api', 'throttle:api'])
             Route::patch('{uuid}/outgate',      [ContainerController::class, 'outgate'])->name('outgate');
             Route::patch('{uuid}/empty-return', [ContainerController::class, 'emptyReturn'])->name('empty-return');
             Route::get('{uuid}/location-history', [ContainerController::class, 'locationHistory'])->name('location-history');
+            Route::post('{uuid}/link-vessel',    [ContainerController::class, 'linkVessel'])->name('link-vessel');
 
             // Container customer fields (nested)
             Route::get('{uuid}/customer-fields',                         [ContainerCustomerFieldController::class, 'index'])->name('customer-fields.index');

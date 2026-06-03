@@ -36,6 +36,11 @@ class StoreContainerRequest extends FormRequest
             'freight_hold'      => ['nullable', 'boolean'],
             'discharge_date'    => ['nullable', 'date'],
             'last_free_day'     => ['nullable', 'date'],
+            // Vessel auto-linking fields (OCR / manual entry)
+            'vessel_name'       => ['nullable', 'string', 'max:255'],
+            'imo'               => ['nullable', 'string', 'max:20'],
+            'mmsi'              => ['nullable', 'string', 'max:20'],
+            'voyage_number'     => ['nullable', 'string', 'max:50'],
         ];
     }
 

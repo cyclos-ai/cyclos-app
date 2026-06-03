@@ -9,6 +9,22 @@
         <!-- Create form dialog -->
         <Dialog v-model:visible="showForm" header="New Tracking Request" modal class="w-[480px]">
             <form @submit.prevent="submitRequest" class="space-y-4 pt-2">
+                <!-- OCR auto-fill panel -->
+                <div class="rounded-lg border border-dashed border-surface-300 bg-surface-50/50 p-3">
+                    <button
+                        type="button"
+                        class="flex w-full items-center gap-2 text-sm font-medium text-teal-600"
+                        @click="showOcr = !showOcr"
+                    >
+                        <i class="pi pi-file-import"></i>
+                        Auto-fill from document (optional)
+                        <i :class="showOcr ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" class="ml-auto text-xs"></i>
+                    </button>
+                    <div v-if="showOcr" class="mt-3">
+                        <DocumentDropZone @extracted="onExtracted" />
+                    </div>
+                </div>
+
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Tracking Type</label>
                     <SelectButton
@@ -152,6 +168,7 @@ import Column from 'primevue/column';
 import { useConfirm } from 'primevue/useconfirm';
 import dayjs from 'dayjs';
 import PageHeader from '@/components/PageHeader.vue';
+import DocumentDropZone from '@/components/documents/DocumentDropZone.vue';
 import { useTrackingStore } from '@/stores/tracking';
 import api from '@/plugins/api';
 
@@ -168,6 +185,7 @@ const showForm = computed({
 const submitting = ref(false);
 const formError = ref('');
 const carrierOptions = ref([]);
+const showOcr = ref(false);
 
 const form = reactive({
     type: 'container',
@@ -186,6 +204,24 @@ const trackingTypes = [
 const typeLabel = computed(() => trackingTypes.find(t => t.value === form.type)?.label || 'Reference');
 const placeholderMap = { container: 'MSCU1234567', mbl: 'MAEU123456789', booking: 'BK123456789', awb: '123-45678901' };
 const typePlaceholder = computed(() => placeholderMap[form.type] || '');
+
+function onExtracted(data) {
+    // Map OCR data to tracking form fields
+    if (data.container_numbers?.length) {
+        form.type = 'container';
+        form.reference_number = data.container_numbers[0];
+    } else if (data.mbl_number) {
+        form.type = 'mbl';
+        form.reference_number = data.mbl_number;
+    } else if (data.booking_number) {
+        form.type = 'booking';
+        form.reference_number = data.booking_number;
+    }
+    if (data.carrier_scac) form.scac = data.carrier_scac;
+    if (data.pod) form.pod = data.pod;
+    showOcr.value = false;
+    formError.value = '';
+}
 
 async function submitRequest() {
     if (!form.reference_number.trim()) { formError.value = 'Reference number is required'; return; }

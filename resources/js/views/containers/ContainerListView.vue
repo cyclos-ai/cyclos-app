@@ -4,13 +4,82 @@
             <template #actions>
                 <DataExport @export="handleExport" />
                 <Button
-                    label="New Tracking Request"
+                    label="New Container"
                     icon="pi pi-plus"
                     size="small"
-                    @click="$router.push({ name: 'tracking-requests-new' })"
+                    @click="showCreateDialog = true"
                 />
             </template>
         </PageHeader>
+
+        <!-- Create Container Dialog -->
+        <Dialog v-model:visible="showCreateDialog" header="New Container" modal class="w-[540px]">
+            <form @submit.prevent="submitCreateContainer" class="space-y-4 pt-2">
+                <!-- OCR auto-fill panel -->
+                <div class="rounded-lg border border-dashed border-surface-300 bg-surface-50/50 p-3">
+                    <button
+                        type="button"
+                        class="flex w-full items-center gap-2 text-sm font-medium text-teal-600"
+                        @click="showContainerOcr = !showContainerOcr"
+                    >
+                        <i class="pi pi-file-import"></i>
+                        Auto-fill from document (optional)
+                        <i :class="showContainerOcr ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" class="ml-auto text-xs"></i>
+                    </button>
+                    <div v-if="showContainerOcr" class="mt-3">
+                        <DocumentDropZone @extracted="onContainerExtracted" />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Container Number <span class="text-red-500">*</span></label>
+                        <InputText v-model="containerForm.container_number" placeholder="MSCU1234567" class="w-full" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Carrier SCAC</label>
+                        <InputText v-model="containerForm.carrier_scac" placeholder="MAEU" class="w-full" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Shipping Line</label>
+                        <InputText v-model="containerForm.shipping_line" placeholder="Maersk" class="w-full" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">MBL Number</label>
+                        <InputText v-model="containerForm.mbl_number" placeholder="MAEU123456789" class="w-full" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">POL</label>
+                        <InputText v-model="containerForm.pol" placeholder="CNSHA" class="w-full" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">POD</label>
+                        <InputText v-model="containerForm.pod" placeholder="USLAX" class="w-full" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ETA</label>
+                        <DatePicker v-model="containerForm.eta" placeholder="Select date" class="w-full" date-format="mm/dd/yy" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Container Type</label>
+                        <InputText v-model="containerForm.container_type" placeholder="40HC" class="w-full" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Vessel</label>
+                        <InputText v-model="containerForm.vessel_name" placeholder="Vessel name" class="w-full" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Weight (kg)</label>
+                        <InputText v-model="containerForm.weight" placeholder="0" class="w-full" />
+                    </div>
+                </div>
+                <Message v-if="createContainerError" severity="error" :closable="false">{{ createContainerError }}</Message>
+            </form>
+            <template #footer>
+                <Button label="Cancel" text @click="showCreateDialog = false" />
+                <Button label="Create Container" icon="pi pi-check" :loading="creatingContainer" @click="submitCreateContainer" />
+            </template>
+        </Dialog>
 
         <!-- Status tabs -->
         <div class="flex gap-1 mb-4 bg-gray-100 p-1 rounded-lg w-fit">
@@ -212,6 +281,9 @@ import { useRouter } from 'vue-router';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Select from 'primevue/select';
+import Dialog from 'primevue/dialog';
+import DatePicker from 'primevue/datepicker';
+import Message from 'primevue/message';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Menu from 'primevue/menu';
@@ -221,6 +293,7 @@ import PageHeader from '@/components/PageHeader.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
 import FilterBuilder from '@/components/FilterBuilder.vue';
 import DataExport from '@/components/DataExport.vue';
+import DocumentDropZone from '@/components/documents/DocumentDropZone.vue';
 import { useContainersStore } from '@/stores/containers';
 import api from '@/plugins/api';
 
@@ -241,6 +314,64 @@ const sortOrder = ref(null);
 const rowMenu = ref(null);
 const rowMenuTarget = ref(null);
 const activeTab = ref(props.defaultFilter || 'all');
+
+// Create container dialog
+const showCreateDialog = ref(false);
+const showContainerOcr = ref(false);
+const creatingContainer = ref(false);
+const createContainerError = ref('');
+const containerForm = reactive({
+    container_number: '',
+    carrier_scac: '',
+    shipping_line: '',
+    mbl_number: '',
+    pol: '',
+    pod: '',
+    eta: null,
+    container_type: '',
+    vessel_name: '',
+    weight: '',
+});
+
+function onContainerExtracted(data) {
+    if (data.container_numbers?.length) containerForm.container_number = data.container_numbers[0];
+    if (data.carrier_scac) containerForm.carrier_scac = data.carrier_scac;
+    if (data.carrier_name) containerForm.shipping_line = data.carrier_name;
+    if (data.mbl_number) containerForm.mbl_number = data.mbl_number;
+    if (data.pol) containerForm.pol = data.pol;
+    if (data.pod) containerForm.pod = data.pod;
+    if (data.eta) containerForm.eta = new Date(data.eta);
+    if (data.container_type) containerForm.container_type = data.container_type;
+    if (data.vessel_name) containerForm.vessel_name = data.vessel_name;
+    if (data.weight) containerForm.weight = String(data.weight);
+    showContainerOcr.value = false;
+    createContainerError.value = '';
+}
+
+async function submitCreateContainer() {
+    if (!containerForm.container_number.trim()) {
+        createContainerError.value = 'Container number is required.';
+        return;
+    }
+    creatingContainer.value = true;
+    createContainerError.value = '';
+    try {
+        const payload = { ...containerForm };
+        if (payload.eta) payload.eta = dayjs(payload.eta).format('YYYY-MM-DD');
+        await api.post('/containers', payload);
+        showCreateDialog.value = false;
+        Object.assign(containerForm, {
+            container_number: '', carrier_scac: '', shipping_line: '', mbl_number: '',
+            pol: '', pod: '', eta: null, container_type: '', vessel_name: '', weight: '',
+        });
+        showContainerOcr.value = false;
+        await loadContainers();
+    } catch (err) {
+        createContainerError.value = err.response?.data?.message || 'Failed to create container.';
+    } finally {
+        creatingContainer.value = false;
+    }
+}
 
 const filters = reactive({
     status: null,

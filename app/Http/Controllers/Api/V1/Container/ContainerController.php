@@ -9,11 +9,16 @@ use App\Http\Requests\Container\StoreContainerRequest;
 use App\Http\Requests\Container\UpdateContainerRequest;
 use App\Http\Resources\Container\ContainerResource;
 use App\Models\Tenant\Container;
+use App\Services\Vessel\VesselLinkingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ContainerController extends Controller
 {
+    public function __construct(
+        private readonly VesselLinkingService $vesselLinkingService,
+    ) {}
+
     /**
      * GET /api/v1/containers
      */
@@ -51,7 +56,9 @@ class ContainerController extends Controller
     {
         $container = Container::create($request->validated());
 
-        return $this->created(new ContainerResource($container->load('mbl')), 'Container created successfully');
+        $this->maybeLink($container, $request->validated());
+
+        return $this->created(new ContainerResource($container->fresh()->load(['mbl', 'vessel'])), 'Container created successfully');
     }
 
     /**
@@ -67,7 +74,65 @@ class ContainerController extends Controller
 
         $container->update($request->validated());
 
-        return $this->success(new ContainerResource($container->fresh()->load('mbl')), 'Container updated successfully');
+        $this->maybeLink($container, $request->validated());
+
+        return $this->success(new ContainerResource($container->fresh()->load(['mbl', 'vessel'])), 'Container updated successfully');
+    }
+
+    /**
+     * POST /api/v1/containers/{uuid}/link-vessel
+     */
+    public function linkVessel(Request $request, string $uuid): JsonResponse
+    {
+        $container = Container::find($uuid);
+
+        if (! $container) {
+            return $this->notFound('Container not found');
+        }
+
+        $request->validate([
+            'vessel_name'   => ['nullable', 'string', 'max:255'],
+            'imo'           => ['nullable', 'string', 'max:20'],
+            'mmsi'          => ['nullable', 'string', 'max:20'],
+            'voyage_number' => ['nullable', 'string', 'max:50'],
+            'carrier_scac'  => ['nullable', 'string', 'max:4'],
+        ]);
+
+        $vessel = $this->vesselLinkingService->linkContainerToVessel($container, $request->only([
+            'vessel_name',
+            'imo',
+            'mmsi',
+            'voyage_number',
+            'carrier_scac',
+        ]));
+
+        if (! $vessel) {
+            return $this->error('No vessel identifying information provided (vessel_name or imo required)', 422);
+        }
+
+        return $this->success($vessel, 'Container linked to vessel successfully');
+    }
+
+    /**
+     * Link a vessel when vessel-identifying fields are present in the payload.
+     */
+    private function maybeLink(Container $container, array $data): void
+    {
+        $hasVesselInfo = ! empty($data['vessel_name'])
+            || ! empty($data['imo'])
+            || ! empty($data['mmsi']);
+
+        if (! $hasVesselInfo) {
+            return;
+        }
+
+        $this->vesselLinkingService->linkContainerToVessel($container, [
+            'vessel_name'   => $data['vessel_name']   ?? null,
+            'imo'           => $data['imo']            ?? null,
+            'mmsi'          => $data['mmsi']           ?? null,
+            'voyage_number' => $data['voyage_number']  ?? null,
+            'carrier_scac'  => $data['carrier_scac']   ?? null,
+        ]);
     }
 
     /**

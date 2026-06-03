@@ -210,9 +210,27 @@
   "hotPaths": [
     {
       "path": "",
-      "accessCount": 8,
-      "lastAccessed": 1780450739205,
+      "accessCount": 22,
+      "lastAccessed": 1780451257850,
       "type": "directory"
+    },
+    {
+      "path": "resources\\js\\views\\tracking\\TrackingRequestView.vue",
+      "accessCount": 7,
+      "lastAccessed": 1780451333938,
+      "type": "file"
+    },
+    {
+      "path": "routes\\tenant.php",
+      "accessCount": 6,
+      "lastAccessed": 1780451250328,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\views\\scheduling\\InboundDrayVisibilityView.vue",
+      "accessCount": 5,
+      "lastAccessed": 1780451322922,
+      "type": "file"
     },
     {
       "path": "resources\\js\\stores\\vessels.js",
@@ -221,9 +239,21 @@
       "type": "file"
     },
     {
-      "path": "routes\\tenant.php",
+      "path": "resources\\js\\views\\containers\\ContainerListView.vue",
       "accessCount": 4,
-      "lastAccessed": 1780450883585,
+      "lastAccessed": 1780451243678,
+      "type": "file"
+    },
+    {
+      "path": "app\\Http\\Controllers\\Api\\V1\\Container\\ContainerController.php",
+      "accessCount": 4,
+      "lastAccessed": 1780451305659,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\views\\mbls\\MBLListView.vue",
+      "accessCount": 4,
+      "lastAccessed": 1780451334565,
       "type": "file"
     },
     {
@@ -287,6 +317,42 @@
       "type": "file"
     },
     {
+      "path": "resources\\js\\components\\documents\\DocumentDropZone.vue",
+      "accessCount": 2,
+      "lastAccessed": 1780451130919,
+      "type": "file"
+    },
+    {
+      "path": "app\\Services\\JsonCargo\\JsonCargoService.php",
+      "accessCount": 2,
+      "lastAccessed": 1780451164030,
+      "type": "file"
+    },
+    {
+      "path": "app\\Http\\Controllers\\Controller.php",
+      "accessCount": 2,
+      "lastAccessed": 1780451164871,
+      "type": "file"
+    },
+    {
+      "path": "app\\Http\\Requests\\Container\\StoreContainerRequest.php",
+      "accessCount": 2,
+      "lastAccessed": 1780451217322,
+      "type": "file"
+    },
+    {
+      "path": "app\\Http\\Requests\\Container\\UpdateContainerRequest.php",
+      "accessCount": 2,
+      "lastAccessed": 1780451221696,
+      "type": "file"
+    },
+    {
+      "path": "app\\Services\\Vessel\\VesselLinkingService.php",
+      "accessCount": 2,
+      "lastAccessed": 1780451306067,
+      "type": "file"
+    },
+    {
       "path": "public\\portal\\carrier.html",
       "accessCount": 1,
       "lastAccessed": 1779835606257,
@@ -296,24 +362,6 @@
       "path": "app\\Http\\Controllers\\Api\\V1\\Tracking\\TrackingRequestController.php",
       "accessCount": 1,
       "lastAccessed": 1780450694214,
-      "type": "file"
-    },
-    {
-      "path": "app\\Http\\Controllers\\Controller.php",
-      "accessCount": 1,
-      "lastAccessed": 1780450694640,
-      "type": "file"
-    },
-    {
-      "path": "app\\Services\\JsonCargo\\JsonCargoService.php",
-      "accessCount": 1,
-      "lastAccessed": 1780450695288,
-      "type": "file"
-    },
-    {
-      "path": "resources\\js\\views\\tracking\\TrackingRequestView.vue",
-      "accessCount": 1,
-      "lastAccessed": 1780450705559,
       "type": "file"
     },
     {
@@ -341,12 +389,6 @@
       "type": "file"
     },
     {
-      "path": "resources\\js\\components\\documents\\DocumentDropZone.vue",
-      "accessCount": 1,
-      "lastAccessed": 1780450824426,
-      "type": "file"
-    },
-    {
       "path": "resources\\js\\views\\documents\\DocumentUploadView.vue",
       "accessCount": 1,
       "lastAccessed": 1780450851224,
@@ -357,6 +399,84 @@
       "accessCount": 1,
       "lastAccessed": 1780450890096,
       "type": "directory"
+    },
+    {
+      "path": "resources\\js\\views\\drayage\\DrayageStepView.vue",
+      "accessCount": 1,
+      "lastAccessed": 1780451148250,
+      "type": "file"
+    },
+    {
+      "path": "app\\Models\\Tenant\\Container.php",
+      "accessCount": 1,
+      "lastAccessed": 1780451150628,
+      "type": "file"
+    },
+    {
+      "path": "app\\Models\\Tenant\\Vessel.php",
+      "accessCount": 1,
+      "lastAccessed": 1780451150703,
+      "type": "file"
+    },
+    {
+      "path": "database\\migrations\\tenant\\2024_01_01_100004_create_vessels_table.php",
+      "accessCount": 1,
+      "lastAccessed": 1780451154312,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\views\\containers\\ContainerDetailView.vue",
+      "accessCount": 1,
+      "lastAccessed": 1780451168191,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\views\\mbls\\MBLDetailView.vue",
+      "accessCount": 1,
+      "lastAccessed": 1780451168867,
+      "type": "file"
+    },
+    {
+      "path": "app\\Http\\Controllers\\Api\\V1\\Vessel",
+      "accessCount": 1,
+      "lastAccessed": 1780451175820,
+      "type": "directory"
+    },
+    {
+      "path": "app\\Services\\Tracking\\VesselTrackingService.php",
+      "accessCount": 1,
+      "lastAccessed": 1780451180133,
+      "type": "file"
+    },
+    {
+      "path": "app\\Services",
+      "accessCount": 1,
+      "lastAccessed": 1780451181499,
+      "type": "directory"
+    },
+    {
+      "path": "app\\Console\\Commands\\Tenant\\CreateTenantCommand.php",
+      "accessCount": 1,
+      "lastAccessed": 1780451261147,
+      "type": "file"
+    },
+    {
+      "path": "app\\Console\\Commands",
+      "accessCount": 1,
+      "lastAccessed": 1780451266005,
+      "type": "directory"
+    },
+    {
+      "path": "app\\Console\\Commands\\Billing\\CalculateDemurrageCommand.php",
+      "accessCount": 1,
+      "lastAccessed": 1780451269436,
+      "type": "file"
+    },
+    {
+      "path": "app\\Console\\Commands\\Tenant\\LinkContainerVesselsCommand.php",
+      "accessCount": 1,
+      "lastAccessed": 1780451296131,
+      "type": "file"
     }
   ],
   "userDirectives": []
