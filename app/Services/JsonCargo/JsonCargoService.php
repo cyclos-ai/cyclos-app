@@ -64,7 +64,7 @@ class JsonCargoService
     public function __construct()
     {
         $this->apiKey   = config('services.jsoncargo.api_key');
-        $this->baseUrl  = rtrim(config('services.jsoncargo.base_url', 'http://api.jsoncargo.com/api/v1'), '/');
+        $this->baseUrl  = rtrim(config('services.jsoncargo.base_url', 'https://api.jsoncargo.com/api/v1'), '/');
         $this->cacheTtl = (int) config('services.jsoncargo.cache_ttl', 900);
         // Use the file store directly to bypass tenancy's tagged cache wrapper
         $this->cache    = Cache::store('file');

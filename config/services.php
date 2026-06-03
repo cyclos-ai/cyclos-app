@@ -53,7 +53,7 @@ return [
     */
     'jsoncargo' => [
         'api_key'   => env('JSONCARGO_API_KEY'),
-        'base_url'  => env('JSONCARGO_BASE_URL', 'http://api.jsoncargo.com/api/v1'),
+        'base_url'  => env('JSONCARGO_BASE_URL', 'https://api.jsoncargo.com/api/v1'),
         'cache_ttl' => env('JSONCARGO_CACHE_TTL', 900), // 15 minutes default
     ],
 
