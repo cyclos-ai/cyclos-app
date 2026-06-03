@@ -83,4 +83,17 @@ return [
         'base_url' => env('ANTHROPIC_BASE_URL', 'https://api.anthropic.com/v1'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Datalastic AIS Vessel Tracking
+    |--------------------------------------------------------------------------
+    | Real-time global AIS vessel positions for the vessel map.
+    | Get an API key at: https://datalastic.com
+    */
+    'datalastic' => [
+        'api_key'  => env('DATALASTIC_API_KEY'),
+        'base_url' => env('DATALASTIC_BASE_URL', 'https://api.datalastic.com/api/v0'),
+        'cache_ttl'=> (int) env('DATALASTIC_CACHE_TTL', 120),
+    ],
+
 ];

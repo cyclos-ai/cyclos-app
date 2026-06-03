@@ -33,6 +33,7 @@ use App\Http\Controllers\Api\V1\Carrier\CarrierController;
 use App\Http\Controllers\Api\V1\Tracking\TrackingRequestController;
 use App\Http\Controllers\Api\V1\TransitTime\TransitTimeController;
 use App\Http\Controllers\Api\V1\Vendor\VendorController;
+use App\Http\Controllers\Api\V1\Vessel\AisController;
 use App\Http\Controllers\Api\V1\Vessel\VesselController;
 use App\Http\Controllers\Api\V1\Volume\VolumeController;
 use App\Http\Controllers\Api\V1\Document\DocumentExtractionController;
@@ -516,6 +517,15 @@ Route::middleware(['auth:api', 'throttle:api'])
             Route::post('drayage-orders/{uuid}/accept',             [TruckHubIntegrationController::class, 'acceptDrayageOrder'])->name('drayage-orders.accept');
             Route::post('drayage-orders/{uuid}/update',             [TruckHubIntegrationController::class, 'updateDrayageStep'])->name('drayage-orders.update');
             Route::get('webhook-config',                            [TruckHubIntegrationController::class, 'webhookConfig'])->name('webhook-config');
+        });
+
+        // ----------------------------------------------------------------
+        // Datalastic AIS Vessel Tracking (global vessel map)
+        // ----------------------------------------------------------------
+        Route::prefix('ais')->name('ais.')->group(function () {
+            Route::get('status',  [AisController::class, 'status'])->name('status');
+            Route::get('vessels', [AisController::class, 'vessels'])->name('vessels');
+            Route::get('vessel',  [AisController::class, 'vessel'])->name('vessel');
         });
 
         // ----------------------------------------------------------------

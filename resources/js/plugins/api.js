@@ -9,12 +9,32 @@ const api = axios.create({
     withCredentials: true,
 });
 
-// Request interceptor: inject auth token
+/**
+ * Resolve the tenant from the current subdomain so the backend can
+ * always identify the tenant via the X-Tenant header — independent of
+ * server-side subdomain parsing. e.g. demo.cyclos.ai -> "demo".
+ * Falls back to the configured default tenant on the apex domain / localhost.
+ */
+function resolveTenant() {
+    const host = window.location.hostname;
+    const parts = host.split('.');
+    if (parts.length >= 3 && parts[0] !== 'www') {
+        return parts[0];
+    }
+    return import.meta.env.VITE_DEFAULT_TENANT || 'demo';
+}
+
+// Request interceptor: inject auth token + tenant header
 api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('auth_token');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
+        }
+
+        const tenant = resolveTenant();
+        if (tenant) {
+            config.headers['X-Tenant'] = tenant;
         }
 
         if (import.meta.env.DEV) {

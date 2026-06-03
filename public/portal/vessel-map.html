@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cyclos.ai — Live Vessel Map</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- DM Sans (matches index.html) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['DM Sans', 'system-ui', 'sans-serif'],
+            mono: ['DM Mono', 'ui-monospace', 'monospace'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      background: #020b18;
+      color: #e2e8f0;
+      -webkit-font-smoothing: antialiased;
+      margin: 0;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ─── Header ─── */
+    #app-header {
+      flex-shrink: 0;
+      height: 52px;
+      background: #0a1628;
+      border-bottom: 1px solid #1e3151;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      z-index: 1000;
+      gap: 12px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .logo-mark {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      background: rgba(13,148,136,0.15);
+      border: 1px solid rgba(13,148,136,0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .wordmark {
+      font-weight: 700;
+      font-size: 0.9375rem;
+      letter-spacing: -0.02em;
+      color: #f1f5f9;
+      white-space: nowrap;
+    }
+    .wordmark span { color: #0d9488; }
+
+    .header-title-sep {
+      color: #1e3151;
+      font-size: 1rem;
+      margin: 0 2px;
+    }
+
+    .header-title {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: #64748b;
+      white-space: nowrap;
+    }
+
+    /* Chips */
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 100px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+    }
+
+    .chip-teal {
+      background: rgba(13,148,136,0.12);
+      border: 1px solid rgba(13,148,136,0.28);
+      color: #2dd4bf;
+    }
+    .chip-teal .dot { background: #0d9488; box-shadow: 0 0 6px rgba(13,148,136,0.8); }
+
+    .chip-cyan {
+      background: rgba(6,182,212,0.10);
+      border: 1px solid rgba(6,182,212,0.25);
+      color: #67e8f9;
+    }
+    .chip-cyan .dot { background: #06b6d4; }
+
+    .chip-amber {
+      background: rgba(245,158,11,0.10);
+      border: 1px solid rgba(245,158,11,0.25);
+      color: #fcd34d;
+    }
+    .chip-amber .dot { background: #f59e0b; }
+
+    .chip-slate {
+      background: rgba(100,116,139,0.12);
+      border: 1px solid rgba(100,116,139,0.22);
+      color: #94a3b8;
+    }
+    .chip-slate .dot { background: #64748b; }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .dot-pulse { animation: pulse 2.5s ease-in-out infinite; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #475569;
+      text-decoration: none;
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid #1e3151;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+    .back-link:hover { color: #94a3b8; border-color: #334155; background: rgba(30,49,81,0.5); }
+
+    /* ─── Map container ─── */
+    #map-wrap {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ─── Dark Leaflet popup ─── */
+    .ais-popup .leaflet-popup-content-wrapper {
+      background: #0d1b2e;
+      border: 1px solid #1e3a5f;
+      border-radius: 12px !important;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.7) !important;
+      padding: 0;
+    }
+    .ais-popup .leaflet-popup-tip-container { display: none; }
+    .ais-popup .leaflet-popup-content { margin: 0; color: #e2e8f0; }
+
+    .popup-inner {
+      padding: 13px 15px;
+      min-width: 230px;
+      font-family: 'DM Sans', system-ui, sans-serif;
+    }
+    .popup-name {
+      font-weight: 700;
+      font-size: 13.5px;
+      color: #f1f5f9;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 2px;
+    }
+    .popup-sub {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: #475569;
+      margin-bottom: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 8px;
+      align-items: center;
+    }
+    .popup-sub-sep { color: #1e3a5f; }
+
+    .popup-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px 12px;
+      margin-bottom: 11px;
+    }
+    .popup-kv { display: flex; flex-direction: column; gap: 1px; }
+    .popup-k {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #475569;
+    }
+    .popup-v {
+      font-size: 12px;
+      color: #cbd5e1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .popup-v.teal { color: #2dd4bf; font-weight: 600; }
+    .popup-v.muted { color: #64748b; font-style: italic; }
+
+    .popup-fleet-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: rgba(13,148,136,0.18);
+      color: #2dd4bf;
+      border: 1px solid rgba(13,148,136,0.35);
+      margin-bottom: 8px;
+    }
+
+    .popup-detail-btn {
+      display: block;
+      width: 100%;
+      text-align: center;
+      background: #0f2744;
+      color: #38bdf8;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 6px 0;
+      border-radius: 6px;
+      border: 1px solid #1e3a5f;
+      cursor: pointer;
+      transition: background 0.15s;
+      font-family: inherit;
+    }
+    .popup-detail-btn:hover { background: #0d9488; color: #fff; border-color: #0d9488; }
+
+    .popup-expanded {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #1e3a5f;
+    }
+    .popup-expanded-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    /* ─── AIS unconfigured overlay ─── */
+    #unconfigured-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 600;
+      pointer-events: none;
+    }
+
+    .unconfigured-card {
+      background: rgba(9,18,34,0.96);
+      border: 1px solid rgba(245,158,11,0.3);
+      border-radius: 16px;
+      padding: 28px 32px;
+      max-width: 380px;
+      text-align: center;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+      pointer-events: auto;
+    }
+
+    .unconfigured-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: rgba(245,158,11,0.1);
+      border: 1px solid rgba(245,158,11,0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+    }
+
+    /* ─── Loading overlay ─── */
+    #loading-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(2,11,24,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 700;
+      backdrop-filter: blur(4px);
+    }
+
+    .loading-card {
+      background: #0d1b2e;
+      border: 1px solid #1e3151;
+      border-radius: 12px;
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(13,148,136,0.2);
+      border-top-color: #0d9488;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ─── AIS mini-loading badge (non-blocking) ─── */
+    #ais-loading-badge {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      z-index: 500;
+      background: rgba(9,18,34,0.92);
+      border: 1px solid #1e3151;
+      border-radius: 8px;
+      padding: 5px 11px;
+      display: none;
+      align-items: center;
+      gap: 7px;
+      font-size: 11px;
+      color: #64748b;
+      backdrop-filter: blur(4px);
+    }
+
+    /* ─── Attribution ─── */
+    #map-attr {
+      position: absolute;
+      bottom: 8px;
+      right: 10px;
+      z-index: 400;
+      font-size: 9px;
+      color: #1e3a5f;
+      pointer-events: none;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #1e3151; border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<!-- ─── Header ─── -->
+<header id="app-header">
+  <div class="header-left">
+    <!-- Logo mark -->
+    <div class="logo-mark">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0d9488" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 17h18M5 17V9l7-5 7 5v8"/>
+      </svg>
+    </div>
+    <span class="wordmark">Cyclos<span>.ai</span></span>
+    <span class="header-title-sep">/</span>
+    <span class="header-title">Live Vessel Map</span>
+  </div>
+
+  <!-- Stat chips -->
+  <div id="stat-chips" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+    <span id="chip-auth" class="chip chip-slate">
+      <span class="dot dot-pulse"></span>
+      <span id="auth-label">Connecting…</span>
+    </span>
+    <span id="chip-vessels" class="chip chip-cyan" style="display:none;">
+      <span class="dot"></span>
+      <span>Vessels in view: <span id="count-vessels">0</span></span>
+    </span>
+    <span id="chip-fleet" class="chip chip-teal" style="display:none;">
+      <span class="dot dot-pulse"></span>
+      <span>Your fleet: <span id="count-fleet">0</span></span>
+    </span>
+  </div>
+
+  <div class="header-right">
+    <a href="index.html" class="back-link">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+        <path d="M8 2L4 6l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Back
+    </a>
+  </div>
+</header>
+
+<!-- ─── Map wrapper ─── -->
+<div id="map-wrap">
+  <div id="map"></div>
+
+  <!-- Initial loading overlay (shown until auth + first AIS fetch done) -->
+  <div id="loading-overlay">
+    <div class="loading-card">
+      <div class="spinner"></div>
+      <div>
+        <div style="font-size:13px;color:#e2e8f0;font-weight:600;">Initializing vessel map…</div>
+        <div id="loading-status" style="font-size:11px;color:#475569;margin-top:2px;">Authenticating</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Non-blocking AIS loading badge -->
+  <div id="ais-loading-badge">
+    <div class="spinner" style="width:12px;height:12px;border-width:1.5px;"></div>
+    Fetching AIS…
+  </div>
+
+  <!-- AIS unconfigured overlay (hidden until checked) -->
+  <div id="unconfigured-overlay" style="display:none;">
+    <div class="unconfigured-card">
+      <div class="unconfigured-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+      </div>
+      <h3 style="font-size:15px;font-weight:700;color:#f1f5f9;margin:0 0 8px;">Live AIS Not Configured</h3>
+      <p style="font-size:13px;color:#64748b;line-height:1.6;margin:0 0 14px;">
+        Live vessel map requires a Datalastic API key. Add
+        <code style="font-family:'DM Mono',monospace;font-size:11px;color:#94a3b8;background:#0d1b2e;padding:1px 5px;border-radius:3px;border:1px solid #1e3151;">DATALASTIC_API_KEY</code>
+        to activate global AIS tracking.
+      </p>
+      <p style="font-size:11px;color:#334155;margin:0;">Your fleet vessels will still appear if they have live positions via JSONCargo.</p>
+    </div>
+  </div>
+
+  <div id="map-attr">© OpenStreetMap contributors · © CARTO</div>
+</div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN/WLaA=" crossorigin=""></script>
+
+<script>
+  // ─── CONFIG ────────────────────────────────────────────────────────────────
+  const API_BASE   = '/api/v1';
+  const ADMIN_EMAIL = 'admin@cyclos.ai';
+  const ADMIN_PASS  = 'password';
+  const DEFAULT_LAT = 25.77;
+  const DEFAULT_LON = -80.18;
+  const DEFAULT_ZOOM = 5;
+
+  let authToken = null;
+  let aisConfigured = false;
+  let tenantImos = new Set();
+  let tenantMmsis = new Set();
+  let aisMarkerLayer = null;
+  let dbMarkerLayer  = null;
+  let viewportDebounceTimer = null;
+  let map = null;
+  let detailCache = {};  // imo/mmsi → detail data
+
+  // ─── HELPERS ───────────────────────────────────────────────────────────────
+  function fmtDate(str) {
+    if (!str) return '—';
+    try {
+      const d = new Date(str);
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+           + ' ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+    } catch { return str; }
+  }
+
+  function fromNow(str) {
+    if (!str) return '—';
+    try {
+      const diff = Date.now() - new Date(str).getTime();
+      const mins = Math.round(diff / 60000);
+      if (mins < 1) return 'just now';
+      if (mins < 60) return `${mins}m ago`;
+      const hrs = Math.round(mins / 60);
+      if (hrs < 24) return `${hrs}h ago`;
+      return `${Math.round(hrs / 24)}d ago`;
+    } catch { return '—'; }
+  }
+
+  function setLoadingStatus(msg) {
+    const el = document.getElementById('loading-status');
+    if (el) el.textContent = msg;
+  }
+
+  function hideLoadingOverlay() {
+    const el = document.getElementById('loading-overlay');
+    if (el) el.style.display = 'none';
+  }
+
+  function showAisLoadingBadge(show) {
+    const el = document.getElementById('ais-loading-badge');
+    if (!el) return;
+    el.style.display = show ? 'flex' : 'none';
+  }
+
+  function updateChips(vesselCount, fleetCount) {
+    const cv = document.getElementById('chip-vessels');
+    const cf = document.getElementById('chip-fleet');
+    if (cv) { cv.style.display = 'inline-flex'; document.getElementById('count-vessels').textContent = vesselCount; }
+    if (cf && fleetCount > 0) { cf.style.display = 'inline-flex'; document.getElementById('count-fleet').textContent = fleetCount; }
+  }
+
+  // ─── AUTH ──────────────────────────────────────────────────────────────────
+  async function doLogin() {
+    try {
+      const res = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Tenant': 'demo' },
+        body: JSON.stringify({ email: ADMIN_EMAIL, password: ADMIN_PASS }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      authToken = data.token || data.access_token || data.data?.token || data.data?.access_token || null;
+      if (!authToken) throw new Error('No token in response');
+
+      // Update auth chip
+      const chip = document.getElementById('chip-auth');
+      const label = document.getElementById('auth-label');
+      if (chip && label) {
+        chip.className = 'chip chip-teal';
+        chip.querySelector('.dot').classList.add('dot-pulse');
+        label.textContent = 'Authenticated';
+      }
+      return true;
+    } catch (err) {
+      const chip = document.getElementById('chip-auth');
+      const label = document.getElementById('auth-label');
+      if (chip && label) {
+        chip.style.background = 'rgba(239,68,68,0.1)';
+        chip.style.borderColor = 'rgba(239,68,68,0.25)';
+        chip.style.color = '#fca5a5';
+        label.textContent = 'Auth Failed';
+      }
+      console.warn('[Auth] Login failed:', err.message);
+      return false;
+    }
+  }
+
+  async function apiFetch(path, params) {
+    const headers = { 'Accept': 'application/json', 'X-Tenant': 'demo' };
+    if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+    let url = `${API_BASE}${path}`;
+    if (params) {
+      const qs = new URLSearchParams(params).toString();
+      url += (url.includes('?') ? '&' : '?') + qs;
+    }
+    const res = await fetch(url, { headers });
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+    return res.json();
+  }
+
+  // ─── AIS VESSEL COLORS ─────────────────────────────────────────────────────
+  function vesselTypeColor(v) {
+    const t = (v.type_specific || v.type || '').toLowerCase();
+    if (t.includes('container')) return { fill: '#0d9488', label: 'Container' };
+    if (t.includes('tanker') || t.includes('crude') || t.includes('lng') || t.includes('lpg')) return { fill: '#f59e0b', label: 'Tanker' };
+    if (t.includes('bulk')) return { fill: '#3b82f6', label: 'Bulk' };
+    if (t.includes('cargo') || t.includes('general')) return { fill: '#8b5cf6', label: 'Cargo' };
+    if (t.includes('passenger') || t.includes('cruise')) return { fill: '#ec4899', label: 'Passenger' };
+    if (t.includes('tug') || t.includes('service')) return { fill: '#6b7280', label: 'Service' };
+    return { fill: '#64748b', label: v.type_specific || v.type || 'Vessel' };
+  }
+
+  function isTenantVessel(v) {
+    if (v.imo && tenantImos.has(String(v.imo))) return true;
+    if (v.mmsi && tenantMmsis.has(String(v.mmsi))) return true;
+    return false;
+  }
+
+  // ─── ICON FACTORY ──────────────────────────────────────────────────────────
+  function makeShipIcon(v) {
+    const course = v.course ?? v.heading ?? 0;
+    const isTenant = isTenantVessel(v);
+    const { fill } = vesselTypeColor(v);
+    const color = isTenant ? '#2dd4bf' : fill;
+    const size  = isTenant ? 30 : 20;
+    const half  = size / 2;
+    const padding = isTenant ? 9 : 5;
+    const totalSize = size + padding * 2;
+
+    const glow = isTenant
+      ? `filter: drop-shadow(0 0 7px ${color}) drop-shadow(0 0 14px ${color}88);`
+      : `filter: drop-shadow(0 0 2px ${color}55);`;
+
+    const ring = isTenant
+      ? `<circle cx="0" cy="0" r="${half + 4}" fill="none" stroke="${color}" stroke-width="1.5" stroke-dasharray="3 2" opacity="0.55"/>`
+      : '';
+
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg"
+         width="${totalSize}" height="${totalSize}"
+         viewBox="${-half - padding} ${-half - padding} ${totalSize} ${totalSize}"
+         style="transform:rotate(${course}deg);${glow}">
+      ${ring}
+      <polygon points="0,${-half+2} ${half-2},${half-2} 0,${half-5} ${-(half-2)},${half-2}"
+               fill="${color}" stroke="rgba(255,255,255,0.65)" stroke-width="1.2" stroke-linejoin="round"/>
+    </svg>`;
+
+    return L.divIcon({
+      html: svg,
+      iconSize:    [totalSize, totalSize],
+      iconAnchor:  [totalSize / 2, totalSize / 2],
+      popupAnchor: [0, -(half + padding)],
+      className: '',
+    });
+  }
+
+  function makeDbVesselIcon(course = 0, selected = false) {
+    const color = selected ? '#2dd4bf' : '#14b8a6';
+    const glow  = selected
+      ? 'filter:drop-shadow(0 0 6px #2dd4bf) drop-shadow(0 0 12px #0d948880);'
+      : 'filter:drop-shadow(0 0 3px #14b8a660);';
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="-13 -13 26 26"
+         style="transform:rotate(${course}deg);${glow}">
+      <polygon points="0,-10 6,8 0,4 -6,8" fill="${color}" stroke="rgba(255,255,255,0.8)" stroke-width="1.5" stroke-linejoin="round"/>
+    </svg>`;
+    return L.divIcon({
+      html: svg,
+      iconSize: [26, 26], iconAnchor: [13, 13], popupAnchor: [0, -15],
+      className: '',
+    });
+  }
+
+  // ─── POPUP BUILDER ─────────────────────────────────────────────────────────
+  function buildAisPopup(v) {
+    const isTenant = isTenantVessel(v);
+    const { label: typeLabel } = vesselTypeColor(v);
+    const key = v.imo || v.mmsi;
+
+    return `
+      <div class="popup-inner">
+        ${isTenant ? '<div class="popup-fleet-badge">&#x2605; Your Fleet</div>' : ''}
+        <div class="popup-name">${esc(v.name || 'Unknown Vessel')}</div>
+        <div class="popup-sub">
+          <span>${esc(typeLabel)}</span>
+          ${v.imo  ? `<span class="popup-sub-sep">·</span><span>IMO ${esc(String(v.imo))}</span>` : ''}
+          ${v.mmsi ? `<span class="popup-sub-sep">·</span><span>MMSI ${esc(String(v.mmsi))}</span>` : ''}
+        </div>
+        <div class="popup-grid">
+          <div class="popup-kv">
+            <span class="popup-k">Speed</span>
+            <span class="popup-v teal">${v.speed != null ? v.speed + ' kn' : '—'}</span>
+          </div>
+          <div class="popup-kv">
+            <span class="popup-k">Course</span>
+            <span class="popup-v">${v.course != null ? v.course + '°' : '—'}</span>
+          </div>
+          <div class="popup-kv">
+            <span class="popup-k">Destination</span>
+            <span class="popup-v">${esc(v.destination || '—')}</span>
+          </div>
+          <div class="popup-kv">
+            <span class="popup-k">Last Report</span>
+            <span class="popup-v muted">${fromNow(v.last_position_UTC)}</span>
+          </div>
+        </div>
+        <button class="popup-detail-btn" onclick="handleDetailsClick(${JSON.stringify(key)}, this)">Details</button>
+        <div id="detail-block-${esc(String(key))}" class="popup-expanded" style="display:none;"></div>
+      </div>`;
+  }
+
+  function buildDbVesselPopup(v) {
+    return `
+      <div class="popup-inner">
+        <div class="popup-fleet-badge">&#x2713; Your Vessel</div>
+        <div class="popup-name">${esc(v.name || '—')}</div>
+        <div class="popup-sub">
+          <span>IMO ${esc(String(v.imo_number || '—'))}</span>
+          ${v.mmsi ? `<span class="popup-sub-sep">·</span><span>MMSI ${esc(String(v.mmsi))}</span>` : ''}
+        </div>
+        <div class="popup-grid">
+          <div class="popup-kv">
+            <span class="popup-k">Speed</span>
+            <span class="popup-v teal">${v.speed != null ? v.speed + ' kn' : '—'}</span>
+          </div>
+          <div class="popup-kv">
+            <span class="popup-k">Course</span>
+            <span class="popup-v">${v.course != null ? v.course + '°' : '—'}</span>
+          </div>
+          <div class="popup-kv">
+            <span class="popup-k">Destination</span>
+            <span class="popup-v">${esc(v.destination || '—')}</span>
+          </div>
+          <div class="popup-kv">
+            <span class="popup-k">Last Report</span>
+            <span class="popup-v muted">${fromNow(v.last_position_UTC)}</span>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function esc(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  // ─── DETAILS POPUP ACTION ─────────────────────────────────────────────────
+  window.handleDetailsClick = async function(key, btn) {
+    const blockId = `detail-block-${esc(String(key))}`;
+    const block = document.getElementById(blockId);
+    if (!block) return;
+
+    // Toggle if already loaded
+    if (block.style.display !== 'none') {
+      block.style.display = 'none';
+      btn.textContent = 'Details';
+      return;
+    }
+
+    if (detailCache[key]) {
+      renderDetailBlock(block, detailCache[key]);
+      block.style.display = 'block';
+      btn.textContent = 'Hide';
+      return;
+    }
+
+    btn.textContent = 'Loading…';
+    btn.disabled = true;
+    try {
+      const isImo = /^\d{7}$/.test(String(key));
+      const params = isImo ? { imo: key } : { mmsi: key };
+      const data = await apiFetch('/ais/vessel', params);
+      const detail = data?.data ?? {};
+      detailCache[key] = detail;
+      renderDetailBlock(block, detail);
+      block.style.display = 'block';
+      btn.textContent = 'Hide';
+    } catch {
+      btn.textContent = 'Details';
+    } finally {
+      btn.disabled = false;
+    }
+  };
+
+  function renderDetailBlock(block, detail) {
+    const rows = [];
+    if (detail.vessel_type) rows.push(['Vessel Type', detail.vessel_type]);
+    if (detail.flag)        rows.push(['Flag', detail.flag]);
+    if (detail.length)      rows.push(['Length', detail.length + ' m']);
+    if (detail.width)       rows.push(['Width', detail.width + ' m']);
+    if (detail.draught)     rows.push(['Draught', detail.draught + ' m']);
+    if (detail.year_built)  rows.push(['Built', detail.year_built]);
+    if (!rows.length) rows.push(['Detail', 'No additional data']);
+
+    block.innerHTML = rows.map(([k, val]) => `
+      <div class="popup-expanded-row">
+        <span class="popup-k">${esc(k)}</span>
+        <span class="popup-v">${esc(String(val))}</span>
+      </div>`).join('');
+  }
+
+  // ─── VIEWPORT RADIUS ─────────────────────────────────────────────────────
+  function getViewportParams() {
+    if (!map) return null;
+    const center = map.getCenter();
+    const bounds = map.getBounds();
+    const sw = bounds.getSouthWest();
+    const ne = bounds.getNorthEast();
+    const latDiff = Math.abs(ne.lat - sw.lat);
+    const lonDiff = Math.abs(ne.lng - sw.lng);
+    const halfDiag = Math.sqrt(latDiff * latDiff + lonDiff * lonDiff) / 2;
+    const radiusNm = Math.min(Math.round(halfDiag * 60), 100);
+    return { lat: center.lat.toFixed(6), lon: center.lng.toFixed(6), radius: radiusNm };
+  }
+
+  // ─── PLOT AIS VESSELS ────────────────────────────────────────────────────
+  function plotAisVessels(vessels) {
+    if (aisMarkerLayer) {
+      aisMarkerLayer.clearLayers();
+    } else {
+      aisMarkerLayer = L.layerGroup().addTo(map);
+    }
+
+    let fleetCount = 0;
+    for (const v of vessels) {
+      if (v.lat == null || v.lon == null) continue;
+      const isTenant = isTenantVessel(v);
+      if (isTenant) fleetCount++;
+
+      const marker = L.marker([v.lat, v.lon], {
+        icon: makeShipIcon(v),
+        zIndexOffset: isTenant ? 2000 : (v.type_specific || '').toLowerCase().includes('container') ? 500 : 100,
+      });
+
+      marker.bindPopup(buildAisPopup(v), {
+        maxWidth: 310,
+        className: 'ais-popup',
+      });
+
+      aisMarkerLayer.addLayer(marker);
+    }
+
+    updateChips(vessels.length, fleetCount);
+  }
+
+  // ─── PLOT DB VESSELS ─────────────────────────────────────────────────────
+  function plotDbVessels(vessels) {
+    if (dbMarkerLayer) {
+      dbMarkerLayer.clearLayers();
+    } else {
+      dbMarkerLayer = L.layerGroup().addTo(map);
+    }
+
+    for (const v of vessels) {
+      if (v.lat == null || v.lon == null) continue;
+      const marker = L.marker([v.lat, v.lon], {
+        icon: makeDbVesselIcon(v.course ?? v.heading ?? 0, false),
+        zIndexOffset: 1500,
+      });
+      marker.bindPopup(buildDbVesselPopup(v), {
+        maxWidth: 290,
+        className: 'ais-popup',
+      });
+      dbMarkerLayer.addLayer(marker);
+    }
+  }
+
+  // ─── FETCH AIS VESSELS ────────────────────────────────────────────────────
+  async function fetchAisVessels() {
+    if (!aisConfigured) return;
+    const params = getViewportParams();
+    if (!params) return;
+
+    showAisLoadingBadge(true);
+    try {
+      const data = await apiFetch('/ais/vessels', params);
+      if (data?.configured === false) {
+        aisConfigured = false;
+        showUnconfigured(true);
+        return;
+      }
+      const vessels = data?.data?.vessels ?? [];
+      plotAisVessels(vessels);
+    } catch (err) {
+      console.warn('[AIS] Fetch failed:', err.message);
+    } finally {
+      showAisLoadingBadge(false);
+    }
+  }
+
+  function showUnconfigured(show) {
+    const el = document.getElementById('unconfigured-overlay');
+    if (el) el.style.display = show ? 'flex' : 'none';
+  }
+
+  // ─── FETCH TENANT VESSELS ────────────────────────────────────────────────
+  async function fetchTenantVessels() {
+    try {
+      const data = await apiFetch('/vessels');
+      const vessels = data?.data || (Array.isArray(data) ? data : []);
+      for (const v of vessels) {
+        if (v.imo_number) tenantImos.add(String(v.imo_number));
+        if (v.mmsi)       tenantMmsis.add(String(v.mmsi));
+      }
+      // Plot any that have live positions
+      const withPos = vessels.filter(v => v.lat != null && v.lon != null);
+      if (withPos.length > 0) plotDbVessels(withPos);
+    } catch (err) {
+      console.warn('[Vessels] Fetch failed:', err.message);
+    }
+  }
+
+  // ─── MAP INIT ────────────────────────────────────────────────────────────
+  async function initMap() {
+    map = L.map('map', {
+      center: [DEFAULT_LAT, DEFAULT_LON],
+      zoom: DEFAULT_ZOOM,
+      zoomControl: true,
+      attributionControl: false,
+    });
+
+    // CARTO Voyager — lighter, shows port names clearly
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      subdomains: ['a', 'b', 'c', 'd'],
+    }).addTo(map);
+
+    // Debounced viewport change handler
+    map.on('moveend zoomend', () => {
+      if (!aisConfigured) return;
+      clearTimeout(viewportDebounceTimer);
+      viewportDebounceTimer = setTimeout(fetchAisVessels, 600);
+    });
+  }
+
+  // ─── BOOTSTRAP ────────────────────────────────────────────────────────────
+  async function init() {
+    await initMap();
+
+    setLoadingStatus('Authenticating…');
+    const ok = await doLogin();
+
+    if (!ok) {
+      setLoadingStatus('Auth failed — showing base map');
+      setTimeout(hideLoadingOverlay, 1200);
+      return;
+    }
+
+    // Parallel: check AIS status + fetch tenant vessels
+    setLoadingStatus('Loading vessel data…');
+    const [aisStatusRes] = await Promise.allSettled([
+      apiFetch('/ais/status').catch(() => null),
+      fetchTenantVessels(),
+    ]);
+
+    const aisData = aisStatusRes.status === 'fulfilled' ? aisStatusRes.value : null;
+    aisConfigured = aisData?.data?.configured ?? false;
+
+    if (!aisConfigured) {
+      showUnconfigured(true);
+    }
+
+    hideLoadingOverlay();
+
+    if (aisConfigured) {
+      setLoadingStatus('Fetching AIS…');
+      await fetchAisVessels();
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
