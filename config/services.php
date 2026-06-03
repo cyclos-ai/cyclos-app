@@ -69,4 +69,18 @@ return [
         'webhook_key' => env('EDI_WEBHOOK_KEY'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Anthropic Claude API (Document OCR / Extraction)
+    |--------------------------------------------------------------------------
+    | Used for AI-powered extraction of structured shipping data from PDFs
+    | (Delivery Orders, Bills of Lading, Arrival Notices).
+    | Get an API key at: https://console.anthropic.com
+    */
+    'anthropic' => [
+        'api_key'  => env('ANTHROPIC_API_KEY'),
+        'model'    => env('ANTHROPIC_MODEL', 'claude-3-5-sonnet-20241022'),
+        'base_url' => env('ANTHROPIC_BASE_URL', 'https://api.anthropic.com/v1'),
+    ],
+
 ];

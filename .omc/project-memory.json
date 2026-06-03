@@ -209,6 +209,24 @@
   },
   "hotPaths": [
     {
+      "path": "",
+      "accessCount": 8,
+      "lastAccessed": 1780450739205,
+      "type": "directory"
+    },
+    {
+      "path": "resources\\js\\stores\\vessels.js",
+      "accessCount": 4,
+      "lastAccessed": 1780450770880,
+      "type": "file"
+    },
+    {
+      "path": "routes\\tenant.php",
+      "accessCount": 4,
+      "lastAccessed": 1780450883585,
+      "type": "file"
+    },
+    {
       "path": "public\\portal\\shipper.html",
       "accessCount": 3,
       "lastAccessed": 1779835611721,
@@ -221,9 +239,123 @@
       "type": "directory"
     },
     {
+      "path": "resources\\js\\views\\map\\MapView.vue",
+      "accessCount": 3,
+      "lastAccessed": 1780450855361,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\config\\navigation.js",
+      "accessCount": 3,
+      "lastAccessed": 1780450864835,
+      "type": "file"
+    },
+    {
+      "path": "config\\services.php",
+      "accessCount": 3,
+      "lastAccessed": 1780450884257,
+      "type": "file"
+    },
+    {
+      "path": ".env.example",
+      "accessCount": 3,
+      "lastAccessed": 1780450890230,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\stores\\jsonCargo.js",
+      "accessCount": 2,
+      "lastAccessed": 1780450730881,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\router\\index.js",
+      "accessCount": 2,
+      "lastAccessed": 1780450858567,
+      "type": "file"
+    },
+    {
+      "path": "app\\Services\\Ocr\\DocumentExtractionService.php",
+      "accessCount": 2,
+      "lastAccessed": 1780450877494,
+      "type": "file"
+    },
+    {
+      "path": "app\\Http\\Controllers\\Api\\V1\\Document\\DocumentExtractionController.php",
+      "accessCount": 2,
+      "lastAccessed": 1780450878040,
+      "type": "file"
+    },
+    {
       "path": "public\\portal\\carrier.html",
       "accessCount": 1,
       "lastAccessed": 1779835606257,
+      "type": "directory"
+    },
+    {
+      "path": "app\\Http\\Controllers\\Api\\V1\\Tracking\\TrackingRequestController.php",
+      "accessCount": 1,
+      "lastAccessed": 1780450694214,
+      "type": "file"
+    },
+    {
+      "path": "app\\Http\\Controllers\\Controller.php",
+      "accessCount": 1,
+      "lastAccessed": 1780450694640,
+      "type": "file"
+    },
+    {
+      "path": "app\\Services\\JsonCargo\\JsonCargoService.php",
+      "accessCount": 1,
+      "lastAccessed": 1780450695288,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\views\\tracking\\TrackingRequestView.vue",
+      "accessCount": 1,
+      "lastAccessed": 1780450705559,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\stores\\tracking.js",
+      "accessCount": 1,
+      "lastAccessed": 1780450706153,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\views\\rail\\RailMapView.vue",
+      "accessCount": 1,
+      "lastAccessed": 1780450735305,
+      "type": "file"
+    },
+    {
+      "path": "package.json",
+      "accessCount": 1,
+      "lastAccessed": 1780450741871,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\stores\\documentExtraction.js",
+      "accessCount": 1,
+      "lastAccessed": 1780450787879,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\components\\documents\\DocumentDropZone.vue",
+      "accessCount": 1,
+      "lastAccessed": 1780450824426,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js\\views\\documents\\DocumentUploadView.vue",
+      "accessCount": 1,
+      "lastAccessed": 1780450851224,
+      "type": "file"
+    },
+    {
+      "path": "resources\\js",
+      "accessCount": 1,
+      "lastAccessed": 1780450890096,
       "type": "directory"
     }
   ],

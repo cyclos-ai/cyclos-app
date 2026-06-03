@@ -164,6 +164,14 @@ const routes = [
                 props: { showForm: true },
             },
 
+            // Document Upload (OCR / PDF extraction)
+            {
+                path: 'documents/upload',
+                name: 'documents-upload',
+                component: () => import('@/views/documents/DocumentUploadView.vue'),
+                meta: { requiresAuth: true },
+            },
+
             // Demurrage
             {
                 path: 'demurrage',

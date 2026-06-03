@@ -35,6 +35,7 @@ use App\Http\Controllers\Api\V1\TransitTime\TransitTimeController;
 use App\Http\Controllers\Api\V1\Vendor\VendorController;
 use App\Http\Controllers\Api\V1\Vessel\VesselController;
 use App\Http\Controllers\Api\V1\Volume\VolumeController;
+use App\Http\Controllers\Api\V1\Document\DocumentExtractionController;
 use App\Http\Controllers\Api\V1\Edi\EdiWebhookController;
 use App\Http\Controllers\Api\V1\Webhook\WebhookController;
 use Illuminate\Support\Facades\Route;
@@ -540,6 +541,14 @@ Route::middleware(['auth:api', 'throttle:api'])
             // Port & Terminal
             Route::get('ports/find',            [\App\Http\Controllers\Api\V1\JsonCargo\JsonCargoController::class, 'portFinder'])->name('ports.find');
             Route::get('terminals/find',        [\App\Http\Controllers\Api\V1\JsonCargo\JsonCargoController::class, 'terminalFinder'])->name('terminals.find');
+        });
+
+        // ----------------------------------------------------------------
+        // Document Extraction (OCR via Anthropic Claude)
+        // ----------------------------------------------------------------
+        Route::prefix('documents')->name('documents.')->group(function () {
+            Route::get('extract/status', [DocumentExtractionController::class, 'status'])->name('extract.status');
+            Route::post('extract',       [DocumentExtractionController::class, 'extract'])->name('extract');
         });
 
         // ----------------------------------------------------------------
