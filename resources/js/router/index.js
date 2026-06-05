@@ -348,6 +348,12 @@ const routes = [
                 name: 'drayage-detail',
                 component: () => import('@/views/drayage/DrayageStepView.vue'),
             },
+            {
+                path: 'scheduled-drops',
+                name: 'scheduled-drops',
+                component: () => import('@/views/drayage/ScheduledDropsView.vue'),
+                meta: { roles: ['shipper', 'admin'] },
+            },
 
             // Uploads
             {

@@ -40,8 +40,9 @@ export const navigationGroups = [
         label: 'Drayage',
         roles: ['shipper', 'admin'],
         items: [
-            { label: 'Overview', icon: 'pi-chart-line', to: '/scheduling/overview', name: 'scheduling-overview' },
-            { label: 'Inbound', icon: 'pi-inbox', to: '/scheduling/inbound', name: 'scheduling-inbound' },
+            { label: 'Overview',          icon: 'pi-chart-line',   to: '/scheduling/overview',  name: 'scheduling-overview' },
+            { label: 'Inbound',           icon: 'pi-inbox',         to: '/scheduling/inbound',   name: 'scheduling-inbound' },
+            { label: 'Scheduled Drops',   icon: 'pi-calendar-plus', to: '/scheduled-drops',      name: 'scheduled-drops' },
         ],
     },
     {

@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\V1\Demurrage\DetentionController;
 use App\Http\Controllers\Api\V1\DistributionCenter\DistributionCenterController;
 use App\Http\Controllers\Api\V1\Drayage\DrayageStepController;
 use App\Http\Controllers\Api\V1\Drayage\ImportDrayageController;
+use App\Http\Controllers\Api\V1\Drayage\ScheduledDropController;
 use App\Http\Controllers\Api\V1\Factory\FactoryController;
 use App\Http\Controllers\Api\V1\Integration\TruckHubIntegrationController;
 use App\Http\Controllers\Api\V1\Invoice\DrayageInvoiceController;
@@ -234,6 +235,19 @@ Route::middleware(['auth:api', 'throttle:api'])
             Route::put('{uuid}',            [ImportDrayageController::class, 'update'])->name('update');
             Route::delete('{uuid}',         [ImportDrayageController::class, 'destroy'])->name('destroy');
             Route::get('{uuid}/events',     [ImportDrayageController::class, 'events'])->name('events');
+        });
+
+        // ----------------------------------------------------------------
+        // Scheduled Drops (shared)
+        // ----------------------------------------------------------------
+        Route::prefix('scheduled-drops')->name('scheduled-drops.')->group(function () {
+            Route::get('export',             [ScheduledDropController::class, 'export'])->name('export');
+            Route::post('from-containers',   [ScheduledDropController::class, 'fromContainers'])->name('from-containers');
+            Route::post('send',              [ScheduledDropController::class, 'send'])->name('send');
+            Route::get('/',                  [ScheduledDropController::class, 'index'])->name('index');
+            Route::post('/',                 [ScheduledDropController::class, 'store'])->name('store');
+            Route::put('{uuid}',             [ScheduledDropController::class, 'update'])->name('update');
+            Route::delete('{uuid}',          [ScheduledDropController::class, 'destroy'])->name('destroy');
         });
 
         // ----------------------------------------------------------------
