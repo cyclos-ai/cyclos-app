@@ -30,6 +30,7 @@ class JsonCargoService
         'MEDU' => 'MSC',
         'CMDU' => 'CMA_CGM',
         'CMAU' => 'CMA_CGM',
+        'ECMU' => 'CMA_CGM',   // CMA CGM owned prefix
         'COSU' => 'COSCO',
         'CCLU' => 'COSCO',
         'ZIMU' => 'ZIM',
@@ -146,7 +147,9 @@ class JsonCargoService
         }
 
         $query    = $shippingLine ? ['shipping_line' => $shippingLine] : [];
-        $response = $this->request('GET', "/containers/{$trackingNumber}", $query);
+        // Trailing slash is the canonical URL — without it the API 301-redirects
+        // every call (extra round-trip, and a proxy could drop the x-api-key header).
+        $response = $this->request('GET', "/containers/{$trackingNumber}/", $query);
 
         // Pass error arrays back to the caller as-is so the multi-source
         // chain can capture the real reason (e.g. 403 invalid key).
