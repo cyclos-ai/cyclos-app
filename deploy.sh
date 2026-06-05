@@ -2,32 +2,49 @@
 # =============================================================================
 # Cyclos.ai production deploy script
 #
-# ALWAYS use this to deploy. It clean-syncs the Vite build so the CSS/JS
-# hashes nginx serves can never drift from the hashes the app's manifest
-# references (the bug that caused recurring "broken CSS / blank page").
+# ALWAYS use this to deploy. One command does everything:
+#   - pulls latest code and rebuilds the PHP images
+#   - fixes storage permissions on the app-storage volume (the recurring
+#     "storage/logs ... Permission denied" -> HTTP 500 root cause)
+#   - runs central + tenant migrations
+#   - clears stale caches so new routes/views/config load
+#   - clean-syncs the Vite build so the CSS/JS hashes nginx serves can never
+#     drift from the hashes the app manifest references (the bug that caused
+#     recurring "broken CSS / blank page")
 #
-# Usage:  bash deploy.sh
+# Usage:  git pull && bash deploy.sh      (pull first so you get THIS script)
 # =============================================================================
 set -euo pipefail
 cd "$(dirname "$0")"
 
-echo "==> [1/6] Pulling latest code"
+APP_DIR=/var/www/html
+
+echo "==> [1/8] Pulling latest code"
 git pull
 
-echo "==> [2/6] Building app images (no cache)"
+echo "==> [2/8] Building app images (no cache)"
 docker compose build --no-cache app queue scheduler
 
-echo "==> [3/6] Starting containers"
+echo "==> [3/8] Starting containers"
 docker compose up -d
 
-echo "==> [4/6] CLEAN-syncing built assets to nginx (rm -rf first — critical)"
+echo "==> [4/8] Fixing storage permissions (app-storage volume is root-owned)"
+docker compose exec -u root -T app chown -R www-data:www-data "$APP_DIR/storage" "$APP_DIR/bootstrap/cache"
+docker compose exec -u root -T app chmod -R 775 "$APP_DIR/storage" "$APP_DIR/bootstrap/cache"
+
+echo "==> [5/8] Running migrations (central + all tenants)"
+docker compose exec -T app php artisan migrate --force
+docker compose exec -T app php artisan tenants:migrate --force
+
+echo "==> [6/8] Clearing stale caches (routes/views/config/cache)"
+docker compose exec -T app php artisan optimize:clear
+
+echo "==> [7/8] CLEAN-syncing built assets to nginx (rm -rf first — critical)"
 rm -rf public/build
-docker compose cp app:/var/www/html/public/build ./public/build
+docker compose cp app:"$APP_DIR/public/build" ./public/build
 
-echo "==> [5/6] Restarting nginx"
+echo "==> [8/8] Restarting nginx + verifying manifest <-> disk match"
 docker compose restart nginx
-
-echo "==> [6/6] Verifying manifest <-> disk match"
 sleep 3
 MANIFEST=""
 for p in public/build/.vite/manifest.json public/build/manifest.json; do
@@ -49,3 +66,4 @@ fi
 
 echo ""
 echo "==> Deploy complete. App is live at https://cyclos.ai"
+echo "    New: Scheduled Drops -> shipper compiles a drop list and sends it to the carrier."
