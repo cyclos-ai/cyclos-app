@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\V1\Drayage\DrayageStepController;
 use App\Http\Controllers\Api\V1\Drayage\ImportDrayageController;
 use App\Http\Controllers\Api\V1\Drayage\ScheduledDropController;
 use App\Http\Controllers\Api\V1\Factory\FactoryController;
+use App\Http\Controllers\Api\V1\Integration\QuickBooksIntegrationController;
 use App\Http\Controllers\Api\V1\Integration\TruckHubIntegrationController;
 use App\Http\Controllers\Api\V1\Invoice\DrayageInvoiceController;
 use App\Http\Controllers\Api\V1\Invoice\OceanInvoiceController;
@@ -520,6 +521,20 @@ Route::middleware(['auth:api', 'throttle:api'])
             Route::put('/workflow-mappings/{id}',   [\App\Http\Controllers\Api\V1\Integration\N8nIntegrationController::class, 'updateMapping']);
             Route::delete('/workflow-mappings/{id}',[\App\Http\Controllers\Api\V1\Integration\N8nIntegrationController::class, 'deleteMapping']);
             Route::get('/executions',               [\App\Http\Controllers\Api\V1\Integration\N8nIntegrationController::class, 'executions']);
+        });
+
+        // ----------------------------------------------------------------
+        // QuickBooks Online Integration
+        // ----------------------------------------------------------------
+        Route::prefix('integrations/quickbooks')->name('integrations.quickbooks.')->group(function () {
+            Route::get('/',          [QuickBooksIntegrationController::class, 'status'])->name('status');
+            Route::get('connect',    [QuickBooksIntegrationController::class, 'connect'])->name('connect');
+            Route::post('disconnect',[QuickBooksIntegrationController::class, 'disconnect'])->name('disconnect');
+            // invoice sync endpoints (controller built by a sibling agent — declare the routes now):
+            Route::post('invoices/ocean/{uuid}/push',          [\App\Http\Controllers\Api\V1\Integration\QuickBooksInvoiceController::class, 'pushOcean'])->name('invoices.ocean.push');
+            Route::post('invoices/ocean/{uuid}/sync-status',   [\App\Http\Controllers\Api\V1\Integration\QuickBooksInvoiceController::class, 'syncOcean'])->name('invoices.ocean.sync');
+            Route::post('invoices/drayage/{uuid}/push',        [\App\Http\Controllers\Api\V1\Integration\QuickBooksInvoiceController::class, 'pushDrayage'])->name('invoices.drayage.push');
+            Route::post('invoices/drayage/{uuid}/sync-status', [\App\Http\Controllers\Api\V1\Integration\QuickBooksInvoiceController::class, 'syncDrayage'])->name('invoices.drayage.sync');
         });
 
         // ----------------------------------------------------------------

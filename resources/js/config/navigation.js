@@ -117,6 +117,7 @@ export const navigationGroups = [
             { label: 'Carrier Management', icon: 'pi-truck', to: '/settings/carrier-management', name: 'settings-carrier-management', roles: ['shipper', 'admin'] },
             { label: 'Integrations', icon: 'pi-link', to: '/settings/carrier-integrations', name: 'settings-carrier-integrations', roles: ['shipper', 'admin'] },
             { label: 'Automations', icon: 'pi-bolt', to: '/settings/n8n', name: 'settings-n8n', roles: ['shipper', 'admin'] },
+            { label: 'QuickBooks', icon: 'pi-dollar', to: '/settings/quickbooks', name: 'settings-quickbooks', roles: ['shipper', 'admin'] },
             { label: 'Settings', icon: 'pi-cog', to: '/settings', name: 'settings' },
         ],
     },

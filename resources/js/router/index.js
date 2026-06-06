@@ -417,6 +417,12 @@ const routes = [
                 meta: { title: 'Workflow Automation', roles: ['shipper', 'admin'] },
             },
             {
+                path: 'settings/quickbooks',
+                name: 'settings-quickbooks',
+                component: () => import('@/views/settings/QuickBooksView.vue'),
+                meta: { roles: ['shipper', 'admin'] },
+            },
+            {
                 path: 'settings/billing',
                 name: 'settings-billing',
                 component: () => import('@/views/settings/BillingSettingsView.vue'),

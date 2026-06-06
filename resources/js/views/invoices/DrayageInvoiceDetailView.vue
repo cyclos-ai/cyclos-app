@@ -10,6 +10,10 @@
                 <p class="text-sm text-gray-500 mt-1">{{ invoice.carrier_name }} &middot; Drayage Invoice</p>
             </div>
             <div class="flex gap-2">
+                <template v-if="qbStore.isConnected">
+                    <Button label="Send to QuickBooks" icon="pi pi-send" size="small" outlined :loading="pushingQB" @click="handleQBPush" />
+                    <Button label="Sync Payment" icon="pi pi-sync" size="small" outlined severity="secondary" :loading="syncingQB" @click="handleQBSync" />
+                </template>
                 <Button v-if="invoice.status === 'pending'" label="OK to Pay" icon="pi pi-check" size="small" severity="success" @click="updateStatus('ok_to_pay')" />
                 <Button v-if="invoice.status === 'ok_to_pay'" label="Record Payment" icon="pi pi-dollar" size="small" @click="updateStatus('paid')" />
                 <Button v-if="['pending','ok_to_pay'].includes(invoice.status)" label="Dispute" size="small" severity="warn" outlined @click="updateStatus('disputed')" />
@@ -65,22 +69,53 @@ import { useToast } from 'primevue/usetoast';
 import dayjs from 'dayjs';
 import StatusBadge from '@/components/StatusBadge.vue';
 import { useInvoicesStore } from '@/stores/invoices';
+import { useQuickBooksStore } from '@/stores/quickbooks';
 
 const route = useRoute();
 const toast = useToast();
 const invoicesStore = useInvoicesStore();
+const qbStore = useQuickBooksStore();
 const loading = ref(false);
+const pushingQB = ref(false);
+const syncingQB = ref(false);
 const invoice = computed(() => invoicesStore.currentInvoice);
 
 function formatDate(d) { return d ? dayjs(d).format('MMM D, YYYY') : '—'; }
 function formatCurrency(v) { return v ? Number(v).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '0.00'; }
+
 async function updateStatus(status) {
     await invoicesStore.updateDrayageInvoice(invoice.value.uuid, { status });
     toast.add({ severity: 'success', summary: 'Updated', detail: `Status changed to ${status}`, life: 3000 });
 }
+
+async function handleQBPush() {
+    pushingQB.value = true;
+    try {
+        const result = await qbStore.pushInvoice('drayage', invoice.value.uuid);
+        toast.add({ severity: 'success', summary: 'Sent to QuickBooks', detail: `Invoice #${result.doc_number} created (QB ID: ${result.qb_invoice_id})`, life: 4000 });
+    } catch (err) {
+        toast.add({ severity: 'error', summary: 'QuickBooks Error', detail: err.response?.data?.message || 'Failed to push invoice', life: 5000 });
+    } finally {
+        pushingQB.value = false;
+    }
+}
+
+async function handleQBSync() {
+    syncingQB.value = true;
+    try {
+        const result = await qbStore.syncInvoiceStatus('drayage', invoice.value.uuid);
+        toast.add({ severity: 'success', summary: 'Payment Synced', detail: `Balance: $${result.balance} · Status: ${result.status}`, life: 4000 });
+    } catch (err) {
+        toast.add({ severity: 'error', summary: 'QuickBooks Error', detail: err.response?.data?.message || 'Failed to sync payment', life: 5000 });
+    } finally {
+        syncingQB.value = false;
+    }
+}
+
 onMounted(async () => {
     loading.value = true;
     try { await invoicesStore.fetchDrayageInvoice(route.params.uuid); }
     finally { loading.value = false; }
+    if (!qbStore.status) await qbStore.fetchStatus();
 });
 </script>

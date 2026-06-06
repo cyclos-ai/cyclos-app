@@ -98,6 +98,25 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | QuickBooks Online (Intuit) Accounting Integration
+    |--------------------------------------------------------------------------
+    | OAuth2 connection to QuickBooks Online for pushing invoices.
+    | Create an app and get credentials at: https://developer.intuit.com
+    |
+    | environment: 'production' (https://quickbooks.api.intuit.com) or
+    |              'sandbox'    (https://sandbox-quickbooks.api.intuit.com)
+    */
+    'quickbooks' => [
+        'client_id'     => env('QUICKBOOKS_CLIENT_ID'),
+        'client_secret' => env('QUICKBOOKS_CLIENT_SECRET'),
+        'environment'   => env('QUICKBOOKS_ENVIRONMENT', 'production'),
+        'redirect_uri'  => env('QUICKBOOKS_REDIRECT_URI', 'https://demo.cyclos.ai/quickbooks/callback'),
+        'scopes'        => 'com.intuit.quickbooks.accounting com.intuit.quickbooks.payment openid',
+        'minor_version' => env('QUICKBOOKS_MINOR_VERSION', '73'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Steamship Line Direct APIs (DCSA Track & Trace fallback)
     |--------------------------------------------------------------------------
     | Used when JSONCargo has no data for a container. Each carrier exposes a
