@@ -20,9 +20,16 @@ class Plan extends Model
         'max_containers' => 'integer',
         'max_users' => 'integer',
         'max_tracking_requests' => 'integer',
+        'included_ai_tokens' => 'integer',
+        'included_api_calls' => 'integer',
         'features' => 'array',
         'is_active' => 'boolean',
     ];
+
+    public function isFree(): bool
+    {
+        return (float) $this->price_monthly === 0.0 && (float) $this->price_yearly === 0.0;
+    }
 
     public function tenants(): HasMany
     {

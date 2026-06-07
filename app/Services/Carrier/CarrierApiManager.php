@@ -61,6 +61,7 @@ class CarrierApiManager
         $response = $tracker->trackByContainer($containerNumber);
 
         $this->touchCredential($resolvedScac);
+        $this->recordUsage($resolvedScac);
 
         return $response;
     }
@@ -77,6 +78,7 @@ class CarrierApiManager
         $response = $tracker->trackByMBL($mblNumber);
 
         $this->touchCredential($resolvedScac);
+        $this->recordUsage($resolvedScac);
 
         return $response;
     }
@@ -93,6 +95,7 @@ class CarrierApiManager
         $response = $tracker->trackByBooking($bookingNumber);
 
         $this->touchCredential($resolvedScac);
+        $this->recordUsage($resolvedScac);
 
         return $response;
     }
@@ -105,8 +108,12 @@ class CarrierApiManager
         $resolvedScac = CarrierRegistry::resolveScac($scac);
         $this->checkRateLimit($resolvedScac);
 
-        $tracker = $this->tracker($resolvedScac);
-        return $tracker->getVesselSchedule($vesselName, $voyage);
+        $tracker  = $this->tracker($resolvedScac);
+        $schedule = $tracker->getVesselSchedule($vesselName, $voyage);
+
+        $this->recordUsage($resolvedScac);
+
+        return $schedule;
     }
 
     /**
@@ -184,6 +191,19 @@ class CarrierApiManager
         } catch (\Exception $e) {
             // No tenant context or table doesn't exist yet
             return null;
+        }
+    }
+
+    /**
+     * Record a billable external carrier API call (guarded — never throws).
+     */
+    private function recordUsage(string $scac): void
+    {
+        try {
+            app(\App\Services\Billing\UsageMeteringService::class)
+                ->recordApiCall(tenancy()->tenant?->id, 'carrier:' . $scac, true);
+        } catch (\Throwable $e) {
+            // ignore metering failures
         }
     }
 

@@ -43,3 +43,6 @@ Schedule::command('tracking:clean-logs')->weekly();
 
 // Clean up expired Passport tokens
 Schedule::command('passport:purge --revoked --expired')->daily();
+
+// Report billable usage to Stripe Billing Meters
+Schedule::command('billing:report-usage')->hourly();

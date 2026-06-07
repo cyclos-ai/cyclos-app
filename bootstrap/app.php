@@ -22,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'ensure.role' => \App\Http\Middleware\EnsureRole::class,
+            'count.api' => \App\Http\Middleware\CountApiCallMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

@@ -120,6 +120,18 @@ PROMPT;
                 return ['error' => "Anthropic API returned HTTP {$status}: " . $response->json('error.message', 'Unknown error')];
             }
 
+            // Record AI token usage (guarded — never breaks extraction).
+            try {
+                app(\App\Services\Billing\UsageMeteringService::class)->recordTokens(
+                    tenancy()->tenant?->id,
+                    (int) $response->json('usage.input_tokens', 0),
+                    (int) $response->json('usage.output_tokens', 0),
+                    $this->model,
+                );
+            } catch (\Throwable $e) {
+                // ignore metering failures
+            }
+
             $rawText = $response->json('content.0.text', '');
 
             if (empty($rawText)) {

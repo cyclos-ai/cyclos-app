@@ -53,7 +53,7 @@ use Illuminate\Support\Facades\Route;
 | controller logic runs.
 */
 
-Route::middleware(['auth:api', 'throttle:api'])
+Route::middleware(['auth:api', 'throttle:api', 'count.api'])
     ->name('api.v1.')
     ->group(function () {
 

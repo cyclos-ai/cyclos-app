@@ -68,6 +68,14 @@ class AisController extends Controller
             return $this->error($result['error'], 502);
         }
 
+        // Record billable external AIS lookup (guarded — never breaks the request).
+        try {
+            app(\App\Services\Billing\UsageMeteringService::class)
+                ->recordApiCall(tenancy()->tenant?->id, 'ais', true);
+        } catch (\Throwable $e) {
+            // ignore metering failures
+        }
+
         return $this->success([
             'configured' => true,
             'data'       => [
@@ -106,6 +114,14 @@ class AisController extends Controller
 
         if ($data === null) {
             return $this->notFound('Vessel not found or Datalastic unavailable.');
+        }
+
+        // Record billable external AIS lookup (guarded — never breaks the request).
+        try {
+            app(\App\Services\Billing\UsageMeteringService::class)
+                ->recordApiCall(tenancy()->tenant?->id, 'ais', true);
+        } catch (\Throwable $e) {
+            // ignore metering failures
         }
 
         return $this->success([

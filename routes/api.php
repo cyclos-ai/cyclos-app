@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Auth\AuthController;
+use App\Http\Controllers\Api\V1\Billing\BillingController;
+use App\Http\Controllers\Api\V1\Billing\StripeWebhookController;
 use App\Http\Controllers\Api\V1\User\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -36,7 +38,18 @@ Route::middleware(['auth:api'])
         Route::put('/users/me',           [UserController::class, 'updateProfile'])->name('users.me.update');
         Route::put('/users/me/password',  [UserController::class, 'changePassword'])->name('users.me.password');
         Route::get('/users/supported-scacs', [UserController::class, 'supportedScacs'])->name('users.supported-scacs');
+
+        // Billing (central / per-tenant)
+        Route::prefix('billing')->name('billing.')->group(function () {
+            Route::get('/plans',     [BillingController::class, 'plans'])->name('plans');
+            Route::get('/current',   [BillingController::class, 'current'])->name('current');
+            Route::post('/checkout', [BillingController::class, 'checkout'])->name('checkout');
+            Route::post('/portal',   [BillingController::class, 'portal'])->name('portal');
+        });
     });
+
+// Stripe webhook (no auth — verified by signature)
+Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle'])->name('stripe.webhook');
 
 // Carrier inbound webhooks (no auth — validated by HMAC signature)
 Route::post('/v1/carrier-webhooks/{scac}', [\App\Http\Controllers\Api\V1\Carrier\CarrierWebhookController::class, 'receive'])

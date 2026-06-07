@@ -421,6 +421,14 @@ class JsonCargoService
                 ->$method($this->baseUrl . $path, $query);
 
             if ($response->successful()) {
+                // Record billable external API call (guarded — never breaks the request).
+                try {
+                    app(\App\Services\Billing\UsageMeteringService::class)
+                        ->recordApiCall(tenancy()->tenant?->id, 'jsoncargo', true);
+                } catch (\Throwable $e) {
+                    // ignore metering failures
+                }
+
                 return $response->json();
             }
 
