@@ -24,6 +24,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'ensure.role' => \App\Http\Middleware\EnsureRole::class,
             'count.api' => \App\Http\Middleware\CountApiCallMiddleware::class,
         ]);
+
+        // Behind the Caddy reverse proxy (TLS terminator): trust forwarded
+        // headers so the app detects HTTPS and the real client IP.
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

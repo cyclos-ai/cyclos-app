@@ -1,0 +1,13 @@
+# Caddy — automatic HTTPS (Let's Encrypt) in front of the app's nginx.
+# Caddy obtains + renews the TLS cert for demo.cyclos.ai automatically and
+# reverse-proxies to the internal nginx container (which serves the SPA + PHP).
+{
+	email freighthubcorp@gmail.com
+}
+
+demo.cyclos.ai {
+	encode gzip zstd
+	# Preserves the Host header (tenant subdomain detection) and sets
+	# X-Forwarded-Proto=https so Laravel knows the request is secure.
+	reverse_proxy nginx:80
+}
