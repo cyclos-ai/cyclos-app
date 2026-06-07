@@ -54,9 +54,14 @@ class ContainerController extends Controller
      */
     public function store(StoreContainerRequest $request): JsonResponse
     {
-        $container = Container::create($request->validated());
+        $data = $request->validated();
 
-        $this->maybeLink($container, $request->validated());
+        $attributes = $this->containerAttributes($data);
+        $attributes['organization_id'] = tenancy()->tenant?->id;
+
+        $container = Container::create($attributes);
+
+        $this->maybeLink($container, $data);
 
         return $this->created(new ContainerResource($container->fresh()->load(['mbl', 'vessel'])), 'Container created successfully');
     }
@@ -72,7 +77,7 @@ class ContainerController extends Controller
             return $this->notFound('Container not found');
         }
 
-        $container->update($request->validated());
+        $container->update($this->containerAttributes($request->validated()));
 
         $this->maybeLink($container, $request->validated());
 
@@ -133,6 +138,43 @@ class ContainerController extends Controller
             'voyage_number' => $data['voyage_number']  ?? null,
             'carrier_scac'  => $data['carrier_scac']   ?? null,
         ]);
+    }
+
+    /**
+     * Map validated request fields to actual `containers` columns. The request
+     * accepts API aliases (mbl_uuid, weight_kg, last_free_day) and vessel-linking
+     * inputs (vessel_name/imo/mmsi/voyage_number) that are NOT columns — the
+     * latter are resolved to vessel_id by maybeLink()/VesselLinkingService.
+     */
+    private function containerAttributes(array $data): array
+    {
+        $attrs = [];
+
+        foreach (['container_number', 'carrier_scac', 'size', 'type', 'pol', 'pod',
+                  'eta', 'etd', 'ata', 'atd', 'status', 'notes'] as $key) {
+            if (array_key_exists($key, $data)) {
+                $attrs[$key] = $data[$key];
+            }
+        }
+
+        $aliases = [
+            'mbl_uuid'      => 'mbl_id',
+            'vessel_uuid'   => 'vessel_id',
+            'booking_uuid'  => 'booking_id',
+            'weight_kg'     => 'weight',
+            'last_free_day' => 'last_free_day_demurrage',
+        ];
+        foreach ($aliases as $from => $to) {
+            if (array_key_exists($from, $data) && $data[$from] !== null) {
+                $attrs[$to] = $data[$from];
+            }
+        }
+
+        if (! empty($data['priority'])) {
+            $attrs['is_priority'] = in_array($data['priority'], ['high', 'critical'], true);
+        }
+
+        return $attrs;
     }
 
     /**
