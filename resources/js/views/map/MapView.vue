@@ -21,14 +21,6 @@
                         <span class="w-1.5 h-1.5 rounded-full bg-gray-500 inline-block"></span>
                         No Signal: {{ noPositionCount }}
                     </span>
-                    <!-- AIS live count chip -->
-                    <span
-                        v-if="aisConfigured"
-                        class="inline-flex items-center gap-1.5 bg-cyan-900/60 text-cyan-300 text-xs font-medium px-2.5 py-1 rounded-full border border-cyan-700/50"
-                    >
-                        <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 inline-block" :class="aisLoading ? 'animate-pulse' : ''"></span>
-                        Vessels in view: {{ aisVessels.length }}
-                    </span>
                 </div>
             </div>
             <button
@@ -60,39 +52,6 @@
                                 class="w-full bg-gray-800 border border-gray-600 text-gray-200 text-xs placeholder-gray-500 rounded-md pl-7 pr-3 py-1.5 focus:outline-none focus:border-teal-500"
                             />
                         </span>
-                    </div>
-
-                    <!-- AIS vessels in view section -->
-                    <div v-if="aisConfigured && filteredAisVessels.length > 0" class="flex-shrink-0 border-b border-gray-700">
-                        <button
-                            class="w-full px-3 py-2 flex items-center justify-between text-xs text-cyan-400 hover:text-cyan-300 hover:bg-gray-800/50 transition-colors"
-                            @click="aisExpanded = !aisExpanded"
-                        >
-                            <span class="font-semibold flex items-center gap-1.5">
-                                <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 inline-block"></span>
-                                AIS: {{ filteredAisVessels.length }} in view
-                            </span>
-                            <i class="pi text-[10px]" :class="aisExpanded ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
-                        </button>
-                        <template v-if="aisExpanded">
-                            <div
-                                v-for="v in filteredAisVessels.slice(0, 20)"
-                                :key="v.uuid || v.mmsi"
-                                class="px-3 py-2 border-b border-gray-800/60 cursor-pointer hover:bg-gray-800/50 transition-colors"
-                                :class="isTenantVessel(v) ? 'border-l-2 border-l-teal-500' : ''"
-                                @click="flyToAisVessel(v)"
-                            >
-                                <div class="flex items-start justify-between gap-2 mb-0.5">
-                                    <span class="font-semibold text-white text-xs leading-tight truncate">{{ v.name || 'Unknown' }}</span>
-                                    <span v-if="isTenantVessel(v)" class="flex-shrink-0 text-[9px] font-semibold px-1.5 py-0.5 rounded bg-teal-900/80 text-teal-300 border border-teal-700/50">YOUR FLEET</span>
-                                </div>
-                                <div class="flex items-center gap-2 text-[10px] text-gray-500">
-                                    <span class="text-cyan-500">{{ aisVesselColor(v).label }}</span>
-                                    <span v-if="v.speed != null">· {{ v.speed }} kn</span>
-                                    <span v-if="v.destination" class="truncate">→ {{ v.destination }}</span>
-                                </div>
-                            </div>
-                        </template>
                     </div>
 
                     <!-- DB vessels with live positions -->
@@ -160,154 +119,7 @@
 
             <!-- Map -->
             <div class="flex-1 relative overflow-hidden">
-                <l-map
-                    ref="mapRef"
-                    :zoom="5"
-                    :center="[25.77, -80.18]"
-                    class="w-full h-full"
-                    :options="{ zoomControl: true, attributionControl: false }"
-                    @ready="onMapReady"
-                    @moveend="onViewportChange"
-                    @zoomend="onViewportChange"
-                >
-                    <!-- CARTO Voyager tiles — brighter, shows port labels -->
-                    <l-tile-layer
-                        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-                        attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors &copy; <a href='https://carto.com/attributions'>CARTO</a>"
-                        :subdomains="['a','b','c','d']"
-                    />
-
-                    <!-- AIS live vessel markers -->
-                    <l-marker
-                        v-for="v in aisVessels"
-                        :key="'ais-' + (v.mmsi || v.uuid)"
-                        :lat-lng="[v.lat, v.lon]"
-                        :icon="aisVesselIcon(v)"
-                        :z-index-offset="isTenantVessel(v) ? 2000 : 100"
-                    >
-                        <l-popup :options="{ maxWidth: 300, className: 'vessel-popup-dark' }">
-                            <div class="vessel-popup-content">
-                                <div class="popup-header">
-                                    <span class="popup-vessel-name">{{ v.name || 'Unknown Vessel' }}</span>
-                                    <span v-if="isTenantVessel(v)" class="popup-tenant-badge">YOUR FLEET</span>
-                                </div>
-                                <div class="popup-ids">
-                                    <span>{{ v.type_specific || v.type || '—' }}</span>
-                                    <span class="popup-sep">·</span>
-                                    <span>IMO {{ v.imo || '—' }}</span>
-                                    <span class="popup-sep">·</span>
-                                    <span>MMSI {{ v.mmsi || '—' }}</span>
-                                </div>
-                                <div class="popup-grid">
-                                    <div class="popup-stat">
-                                        <span class="popup-stat-label">Speed</span>
-                                        <span class="popup-stat-value teal">{{ v.speed != null ? v.speed + ' kn' : '—' }}</span>
-                                    </div>
-                                    <div class="popup-stat">
-                                        <span class="popup-stat-label">Course</span>
-                                        <span class="popup-stat-value">{{ v.course != null ? v.course + '°' : '—' }}</span>
-                                    </div>
-                                    <div class="popup-stat">
-                                        <span class="popup-stat-label">Destination</span>
-                                        <span class="popup-stat-value">{{ v.destination || '—' }}</span>
-                                    </div>
-                                    <div class="popup-stat">
-                                        <span class="popup-stat-label">Last Report</span>
-                                        <span class="popup-stat-value muted">{{ v.last_position_UTC ? fromNow(v.last_position_UTC) : '—' }}</span>
-                                    </div>
-                                </div>
-                                <button
-                                    class="popup-view-btn"
-                                    @click.stop="loadAisDetail(v)"
-                                >
-                                    {{ aisDetailLoading === (v.imo || v.mmsi) ? 'Loading…' : 'Details' }}
-                                </button>
-                                <!-- Expanded detail -->
-                                <div v-if="aisDetail && aisDetailKey === (v.imo || v.mmsi)" class="popup-detail-block">
-                                    <div v-if="aisDetail.vessel_type" class="popup-detail-row">
-                                        <span class="popup-stat-label">Vessel Type</span>
-                                        <span class="popup-stat-value">{{ aisDetail.vessel_type }}</span>
-                                    </div>
-                                    <div v-if="aisDetail.flag" class="popup-detail-row">
-                                        <span class="popup-stat-label">Flag</span>
-                                        <span class="popup-stat-value">{{ aisDetail.flag }}</span>
-                                    </div>
-                                    <div v-if="aisDetail.length" class="popup-detail-row">
-                                        <span class="popup-stat-label">Length</span>
-                                        <span class="popup-stat-value">{{ aisDetail.length }} m</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </l-popup>
-                    </l-marker>
-
-                    <!-- DB vessel markers using L.divIcon + rotated SVG ship -->
-                    <l-marker
-                        v-for="vessel in livePositionVessels"
-                        :key="vessel.imo_number || vessel.uuid"
-                        :lat-lng="[vessel.lat, vessel.lon]"
-                        :icon="vesselDivIcon(vessel.course ?? vessel.heading ?? 0, selectedVesselImo === vessel.imo_number)"
-                        :z-index-offset="selectedVesselImo === vessel.imo_number ? 1000 : 500"
-                        @click="selectedVesselImo = vessel.imo_number"
-                    >
-                        <l-popup :options="{ maxWidth: 280, className: 'vessel-popup-dark' }">
-                            <div class="vessel-popup-content">
-                                <!-- Vessel name header -->
-                                <div class="popup-header">
-                                    <span class="popup-vessel-name">{{ vessel.name }}</span>
-                                    <span
-                                        class="popup-nav-badge"
-                                        :class="navStatusClass(vessel.navigation_status)"
-                                    >{{ shortNavStatus(vessel.navigation_status) }}</span>
-                                </div>
-
-                                <!-- IMO / MMSI -->
-                                <div class="popup-ids">
-                                    <span>IMO {{ vessel.imo_number || '—' }}</span>
-                                    <span class="popup-sep">·</span>
-                                    <span>MMSI {{ vessel.mmsi || '—' }}</span>
-                                </div>
-
-                                <!-- Stats grid -->
-                                <div class="popup-grid">
-                                    <div class="popup-stat">
-                                        <span class="popup-stat-label">Speed</span>
-                                        <span class="popup-stat-value teal">{{ vessel.speed != null ? vessel.speed + ' kn' : '—' }}</span>
-                                    </div>
-                                    <div class="popup-stat">
-                                        <span class="popup-stat-label">Course</span>
-                                        <span class="popup-stat-value">{{ vessel.course != null ? vessel.course + '°' : '—' }}</span>
-                                    </div>
-                                    <div class="popup-stat">
-                                        <span class="popup-stat-label">Destination</span>
-                                        <span class="popup-stat-value">{{ vessel.destination || '—' }}</span>
-                                    </div>
-                                    <div class="popup-stat">
-                                        <span class="popup-stat-label">ETA</span>
-                                        <span class="popup-stat-value">{{ formatDate(vessel.eta_UTC) }}</span>
-                                    </div>
-                                    <div class="popup-stat">
-                                        <span class="popup-stat-label">Last Report</span>
-                                        <span class="popup-stat-value muted">{{ vessel.last_position_UTC ? fromNow(vessel.last_position_UTC) : '—' }}</span>
-                                    </div>
-                                    <div class="popup-stat">
-                                        <span class="popup-stat-label">Containers</span>
-                                        <span class="popup-stat-value teal">{{ containerCount(vessel) }}</span>
-                                    </div>
-                                </div>
-
-                                <!-- View vessel link -->
-                                <router-link
-                                    v-if="vessel.uuid"
-                                    :to="{ name: 'vessel-detail', params: { uuid: vessel.uuid } }"
-                                    class="popup-view-btn"
-                                >
-                                    View Vessel
-                                </router-link>
-                            </div>
-                        </l-popup>
-                    </l-marker>
-                </l-map>
+                <div ref="mapEl" class="w-full h-full"></div>
 
                 <!-- Loading overlay -->
                 <div v-if="loading" class="absolute inset-0 bg-gray-900/60 flex items-center justify-center z-20 pointer-events-none backdrop-blur-sm">
@@ -317,35 +129,27 @@
                     </div>
                 </div>
 
-                <!-- AIS loading indicator (non-blocking) -->
-                <div v-if="aisLoading && !loading" class="absolute top-4 right-4 z-20 pointer-events-none">
-                    <div class="bg-gray-900/90 border border-gray-700 text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-xl">
-                        <i class="pi pi-spin pi-spinner text-cyan-400 text-xs"></i>
-                        <span class="text-gray-300">Fetching AIS…</span>
-                    </div>
-                </div>
-
-                <!-- AIS unconfigured overlay -->
+                <!-- No Google Maps key overlay -->
                 <div
-                    v-if="!loading && aisChecked && !aisConfigured"
-                    class="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 pointer-events-none"
+                    v-if="!hasKey"
+                    class="absolute inset-0 flex items-center justify-center z-30 pointer-events-none"
                 >
-                    <div class="bg-gray-900/90 border border-amber-700/50 rounded-xl px-5 py-3 max-w-sm text-center shadow-2xl backdrop-blur-sm pointer-events-auto">
-                        <div class="flex items-center gap-2.5 justify-center">
-                            <svg class="w-4 h-4 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="bg-gray-900/95 border border-amber-700/50 rounded-2xl px-8 py-6 max-w-sm text-center shadow-2xl backdrop-blur-sm pointer-events-auto">
+                        <div class="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
                             </svg>
-                            <p class="text-amber-300 text-xs font-semibold">Live AIS requires a Datalastic API key.</p>
                         </div>
-                        <p class="text-gray-400 text-xs mt-1.5 leading-relaxed">
-                            Add <code class="font-mono text-gray-300 bg-gray-800 px-1 rounded">DATALASTIC_API_KEY</code> to activate global AIS tracking.
+                        <p class="text-white font-semibold mb-2">Add a Google Maps API key</p>
+                        <p class="text-gray-400 text-sm leading-relaxed">
+                            Set <code class="font-mono text-gray-300 bg-gray-800 px-1 rounded">GOOGLE_MAPS_API_KEY</code> on the server to enable the vessel map.
                         </p>
                     </div>
                 </div>
 
-                <!-- Empty / unconfigured state -->
+                <!-- Empty state -->
                 <div
-                    v-if="!loading && showEmptyState"
+                    v-if="hasKey && !loading && showEmptyState"
                     class="absolute inset-0 flex items-center justify-center z-10 pointer-events-none"
                 >
                     <div class="bg-gray-900/90 border border-gray-700 rounded-2xl px-8 py-6 max-w-sm text-center shadow-2xl backdrop-blur-sm pointer-events-auto">
@@ -365,129 +169,57 @@
                         </button>
                     </div>
                 </div>
-
-                <!-- Attribution -->
-                <div class="absolute bottom-2 right-2 z-10 text-[9px] text-gray-600 pointer-events-none">
-                    © OpenStreetMap · © CARTO
-                </div>
             </div>
         </div>
     </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
-import { LMap, LTileLayer, LMarker, LPopup } from '@vue-leaflet/vue-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
+import { setOptions, importLibrary } from '@googlemaps/js-api-loader';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import { useRouter } from 'vue-router';
 import { useVesselsStore } from '@/stores/vessels';
-import api from '@/plugins/api';
 
 dayjs.extend(relativeTime);
 
 const vesselsStore = useVesselsStore();
+const router = useRouter();
+
 const loading = ref(false);
-const mapRef = ref(null);
-const mapReady = ref(false);
+const mapEl = ref(null);
 const sidebarOpen = ref(true);
 const sidebarSearch = ref('');
 const noPositionExpanded = ref(false);
-const aisExpanded = ref(true);
 const selectedVesselImo = ref(null);
 const fetchAttempted = ref(false);
 
-// AIS state
-const aisVessels = ref([]);
-const aisLoading = ref(false);
-const aisConfigured = ref(false);
-const aisChecked = ref(false);
-const aisDetail = ref(null);
-const aisDetailKey = ref(null);
-const aisDetailLoading = ref(null);
+// Google Maps API key (runtime-injected, no rebuild needed)
+const apiKey = window.__GMAPS_KEY__ || import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
+const hasKey = computed(() => !!apiKey);
 
-// Debounce timer
-let viewportDebounceTimer = null;
+// Non-reactive Google Maps objects
+let map = null;
+let infoWindow = null;
+let MarkerCtor = null;
+const markers = new Map(); // key: imo_number|uuid -> google.maps.Marker
 
-// ── Tenant vessel lookup set (IMO + MMSI) ──────────────────────────────────
-
-const tenantImoSet = computed(() => {
-    const s = new Set();
-    for (const v of (vesselsStore.vessels ?? [])) {
-        if (v.imo_number) s.add(String(v.imo_number));
-    }
-    return s;
-});
-
-const tenantMmsiSet = computed(() => {
-    const s = new Set();
-    for (const v of (vesselsStore.vessels ?? [])) {
-        if (v.mmsi) s.add(String(v.mmsi));
-    }
-    return s;
-});
-
-function isTenantVessel(v) {
-    if (!v) return false;
-    if (v.imo && tenantImoSet.value.has(String(v.imo))) return true;
-    if (v.mmsi && tenantMmsiSet.value.has(String(v.mmsi))) return true;
-    return false;
-}
-
-// ── AIS vessel color by type ─────────────────────────────────────────────
-
-function aisVesselColor(v) {
-    const t = (v.type_specific || v.type || '').toLowerCase();
-    if (t.includes('container')) return { fill: '#0d9488', label: 'Container' };
-    if (t.includes('tanker') || t.includes('crude') || t.includes('lng') || t.includes('lpg')) return { fill: '#f59e0b', label: 'Tanker' };
-    if (t.includes('bulk')) return { fill: '#3b82f6', label: 'Bulk' };
-    if (t.includes('cargo') || t.includes('general')) return { fill: '#8b5cf6', label: 'Cargo' };
-    if (t.includes('passenger') || t.includes('cruise')) return { fill: '#ec4899', label: 'Passenger' };
-    if (t.includes('tug') || t.includes('service') || t.includes('pilot')) return { fill: '#6b7280', label: 'Service' };
-    return { fill: '#64748b', label: v.type_specific || v.type || 'Vessel' };
-}
-
-// ── AIS vessel icon factory ──────────────────────────────────────────────
-
-function aisVesselIcon(v) {
-    const course = v.course ?? v.heading ?? 0;
-    const isTenant = isTenantVessel(v);
-    const { fill } = aisVesselColor(v);
-    const color = isTenant ? '#2dd4bf' : fill;
-    const size = isTenant ? 28 : 20;
-    const half = size / 2;
-
-    let glow = '';
-    if (isTenant) {
-        glow = `filter: drop-shadow(0 0 6px ${color}) drop-shadow(0 0 12px ${color}88);`;
-    } else {
-        glow = `filter: drop-shadow(0 0 2px ${color}60);`;
-    }
-
-    // Ring for tenant vessels
-    const ring = isTenant
-        ? `<circle cx="0" cy="0" r="${half + 5}" fill="none" stroke="${color}" stroke-width="1.5" stroke-dasharray="3 2" opacity="0.5"/>`
-        : '';
-
-    const svg = `
-        <svg xmlns="http://www.w3.org/2000/svg"
-             width="${size}" height="${size}"
-             viewBox="${-half - 6} ${-half - 6} ${size + 12} ${size + 12}"
-             style="transform: rotate(${course}deg); ${glow}">
-            ${ring}
-            <polygon points="0,${-half + 2} ${half - 2},${half - 2} 0,${half - 5} ${-(half - 2)},${half - 2}"
-                     fill="${color}" stroke="rgba(255,255,255,0.7)" stroke-width="1.2" stroke-linejoin="round"/>
-        </svg>`;
-
-    return L.divIcon({
-        html: svg,
-        iconSize: [size + 12, size + 12],
-        iconAnchor: [(size + 12) / 2, (size + 12) / 2],
-        popupAnchor: [0, -(size / 2 + 8)],
-        className: '',
-    });
-}
+// ── Dark map style ───────────────────────────────────────────────────────
+const darkMapStyle = [
+    { elementType: 'geometry', stylers: [{ color: '#1d2530' }] },
+    { elementType: 'labels.text.stroke', stylers: [{ color: '#1d2530' }] },
+    { elementType: 'labels.text.fill', stylers: [{ color: '#9ca3af' }] },
+    { featureType: 'administrative', elementType: 'geometry', stylers: [{ color: '#374151' }] },
+    { featureType: 'administrative.country', elementType: 'labels.text.fill', stylers: [{ color: '#cbd5e1' }] },
+    { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#cbd5e1' }] },
+    { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+    { featureType: 'road', stylers: [{ visibility: 'off' }] },
+    { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+    { featureType: 'landscape', elementType: 'geometry', stylers: [{ color: '#212a36' }] },
+    { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0b1622' }] },
+    { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#475569' }] },
+];
 
 // ── Derived lists ─────────────────────────────────────────────────────────
 
@@ -508,17 +240,6 @@ const filteredLiveVessels = computed(() => {
         v.name?.toLowerCase().includes(q) ||
         String(v.imo_number ?? '').includes(q) ||
         v.destination?.toLowerCase().includes(q),
-    );
-});
-
-const filteredAisVessels = computed(() => {
-    const q = sidebarSearch.value.toLowerCase();
-    if (!q) return aisVessels.value;
-    return aisVessels.value.filter(v =>
-        (v.name || '').toLowerCase().includes(q) ||
-        String(v.imo ?? '').includes(q) ||
-        String(v.mmsi ?? '').includes(q) ||
-        (v.destination || '').toLowerCase().includes(q),
     );
 });
 
@@ -550,32 +271,8 @@ const inPortCount = computed(() =>
 const noPositionCount = computed(() => noPositionVessels.value.length);
 
 const showEmptyState = computed(() =>
-    fetchAttempted.value && livePositionVessels.value.length === 0 && aisVessels.value.length === 0,
+    fetchAttempted.value && livePositionVessels.value.length === 0,
 );
-
-// ── DB vessel icon factory ──────────────────────────────────────────────────
-
-function vesselDivIcon(course = 0, isSelected = false) {
-    const color = isSelected ? '#2dd4bf' : '#06c4a7';
-    const glow = isSelected
-        ? 'filter: drop-shadow(0 0 5px #2dd4bf) drop-shadow(0 0 10px #0d948880);'
-        : 'filter: drop-shadow(0 0 3px #06c4a780);';
-
-    const svg = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="-12 -12 24 24"
-             style="transform: rotate(${course}deg); ${glow}">
-            <polygon points="0,-9 6,7 0,3 -6,7"
-                     fill="${color}" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
-        </svg>`;
-
-    return L.divIcon({
-        html: svg,
-        iconSize: [24, 24],
-        iconAnchor: [12, 12],
-        popupAnchor: [0, -14],
-        className: '',
-    });
-}
 
 // ── Nav status helpers ──────────────────────────────────────────────────────
 
@@ -618,112 +315,177 @@ function containerCount(vessel) {
     return vessel.container_count != null ? vessel.container_count : '—';
 }
 
-// ── AIS fetch helpers ────────────────────────────────────────────────────────
+function escapeHtml(s) {
+    return String(s ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
 
-function getViewportParams() {
-    const map = mapRef.value?.leafletObject;
-    if (!map) return null;
+// ── Marker icon (rotated ship arrow Symbol) ─────────────────────────────────
 
-    const center = map.getCenter();
-    const bounds = map.getBounds();
+// Ship-arrow path drawn around origin; Symbol.rotation rotates it to heading.
+const SHIP_PATH = 'M 0,-9 L 6,7 L 0,3 L -6,7 Z';
 
-    // Approximate radius from viewport diagonal, cap at 100nm
-    const sw = bounds.getSouthWest();
-    const ne = bounds.getNorthEast();
-    const latDiff = Math.abs(ne.lat - sw.lat);
-    const lonDiff = Math.abs(ne.lng - sw.lng);
-    const halfDiag = Math.sqrt(latDiff * latDiff + lonDiff * lonDiff) / 2;
-    // 1 degree ≈ 60nm
-    const radiusNm = Math.min(Math.round(halfDiag * 60), 100);
-
+function vesselSymbol(course = 0, isSelected = false) {
     return {
-        lat: center.lat.toFixed(6),
-        lon: center.lng.toFixed(6),
-        radius: radiusNm,
+        path: SHIP_PATH,
+        rotation: course,
+        fillColor: isSelected ? '#2dd4bf' : '#06c4a7',
+        fillOpacity: 1,
+        strokeColor: '#ffffff',
+        strokeWeight: 1.5,
+        scale: 1.2,
+        anchor: new google.maps.Point(0, 0),
     };
 }
 
-async function checkAisStatus() {
-    try {
-        const res = await api.get('/ais/status');
-        aisConfigured.value = res.data?.data?.configured ?? false;
-    } catch {
-        aisConfigured.value = false;
-    } finally {
-        aisChecked.value = true;
-    }
+// ── InfoWindow content ───────────────────────────────────────────────────────
+
+function infoContent(vessel) {
+    const navBadge = shortNavStatus(vessel.navigation_status);
+    const detailHref = vessel.uuid
+        ? router.resolve({ name: 'vessel-detail', params: { uuid: vessel.uuid } }).href
+        : null;
+
+    const viewBtn = detailHref
+        ? `<a href="${escapeHtml(detailHref)}" class="popup-view-btn" data-vessel-link="1">View Vessel</a>`
+        : '';
+
+    return `
+        <div class="vessel-popup-content">
+            <div class="popup-header">
+                <span class="popup-vessel-name">${escapeHtml(vessel.name || 'Unknown Vessel')}</span>
+                <span class="popup-nav-badge">${escapeHtml(navBadge)}</span>
+            </div>
+            <div class="popup-ids">
+                <span>IMO ${escapeHtml(vessel.imo_number || '—')}</span>
+                <span class="popup-sep">·</span>
+                <span>MMSI ${escapeHtml(vessel.mmsi || '—')}</span>
+            </div>
+            <div class="popup-grid">
+                <div class="popup-stat">
+                    <span class="popup-stat-label">Speed</span>
+                    <span class="popup-stat-value teal">${vessel.speed != null ? escapeHtml(vessel.speed) + ' kn' : '—'}</span>
+                </div>
+                <div class="popup-stat">
+                    <span class="popup-stat-label">Course</span>
+                    <span class="popup-stat-value">${vessel.course != null ? escapeHtml(vessel.course) + '°' : '—'}</span>
+                </div>
+                <div class="popup-stat">
+                    <span class="popup-stat-label">Destination</span>
+                    <span class="popup-stat-value">${escapeHtml(vessel.destination || '—')}</span>
+                </div>
+                <div class="popup-stat">
+                    <span class="popup-stat-label">ETA</span>
+                    <span class="popup-stat-value">${escapeHtml(formatDate(vessel.eta_UTC))}</span>
+                </div>
+                <div class="popup-stat">
+                    <span class="popup-stat-label">Last Report</span>
+                    <span class="popup-stat-value muted">${vessel.last_position_UTC ? escapeHtml(fromNow(vessel.last_position_UTC)) : '—'}</span>
+                </div>
+                <div class="popup-stat">
+                    <span class="popup-stat-label">Containers</span>
+                    <span class="popup-stat-value teal">${escapeHtml(containerCount(vessel))}</span>
+                </div>
+            </div>
+            ${viewBtn}
+        </div>`;
 }
 
-async function fetchAisVessels() {
-    if (!aisConfigured.value) return;
-    const params = getViewportParams();
-    if (!params) return;
+function openInfoFor(vessel, marker) {
+    if (!infoWindow || !map) return;
+    infoWindow.setContent(infoContent(vessel));
+    infoWindow.open({ map, anchor: marker });
+}
 
-    aisLoading.value = true;
-    try {
-        const res = await api.get('/ais/vessels', { params });
-        if (res.data?.configured === false) {
-            aisConfigured.value = false;
-            aisVessels.value = [];
-            return;
+// Intercept clicks on the "View Vessel" link inside the InfoWindow so we do
+// SPA navigation instead of a full page reload.
+function onInfoDomReady() {
+    const link = document.querySelector('a[data-vessel-link="1"]');
+    if (!link) return;
+    link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const href = link.getAttribute('href');
+        if (href) router.push(href);
+    });
+}
+
+// ── Marker management ─────────────────────────────────────────────────────────
+
+function vesselKey(v) {
+    return String(v.imo_number ?? v.uuid ?? '');
+}
+
+function renderMarkers() {
+    if (!map || !MarkerCtor) return;
+
+    const vessels = livePositionVessels.value;
+    const seen = new Set();
+
+    for (const vessel of vessels) {
+        const key = vesselKey(vessel);
+        if (!key) continue;
+        seen.add(key);
+
+        const position = { lat: Number(vessel.lat), lng: Number(vessel.lon) };
+        const isSelected = selectedVesselImo.value === vessel.imo_number;
+        const icon = vesselSymbol(vessel.course ?? vessel.heading ?? 0, isSelected);
+
+        let marker = markers.get(key);
+        if (marker) {
+            marker.setPosition(position);
+            marker.setIcon(icon);
+            marker.setZIndex(isSelected ? 1000 : 500);
+            marker.__vessel = vessel;
+        } else {
+            marker = new MarkerCtor({
+                position,
+                map,
+                icon,
+                title: vessel.name || '',
+                zIndex: isSelected ? 1000 : 500,
+            });
+            marker.__vessel = vessel;
+            marker.addListener('click', () => {
+                selectedVesselImo.value = marker.__vessel.imo_number;
+                marker.setIcon(vesselSymbol(marker.__vessel.course ?? marker.__vessel.heading ?? 0, true));
+                openInfoFor(marker.__vessel, marker);
+            });
+            markers.set(key, marker);
         }
-        aisVessels.value = res.data?.data?.vessels ?? [];
-    } catch (err) {
-        // Non-fatal — keep previous vessels
-        console.warn('[AIS] Vessel fetch failed:', err?.message);
-    } finally {
-        aisLoading.value = false;
+    }
+
+    // Remove stale markers
+    for (const [key, marker] of markers) {
+        if (!seen.has(key)) {
+            marker.setMap(null);
+            markers.delete(key);
+        }
     }
 }
 
-async function loadAisDetail(v) {
-    const key = v.imo || v.mmsi;
-    if (!key) return;
-    aisDetailLoading.value = key;
-    aisDetail.value = null;
-    aisDetailKey.value = null;
-    try {
-        const params = v.imo ? { imo: v.imo } : { mmsi: v.mmsi };
-        const res = await api.get('/ais/vessel', { params });
-        aisDetail.value = res.data?.data ?? null;
-        aisDetailKey.value = key;
-    } catch {
-        // Silently ignore — button just won't expand
-    } finally {
-        aisDetailLoading.value = null;
+function clearMarkers() {
+    for (const marker of markers.values()) {
+        google.maps.event.clearInstanceListeners(marker);
+        marker.setMap(null);
     }
+    markers.clear();
 }
 
 // ── Map actions ──────────────────────────────────────────────────────────────
 
-function onMapReady() {
-    mapReady.value = true;
-    // Initial AIS fetch after status check
-    checkAisStatus().then(() => {
-        if (aisConfigured.value) fetchAisVessels();
-    });
-}
-
-function onViewportChange() {
-    if (!aisConfigured.value) return;
-    clearTimeout(viewportDebounceTimer);
-    viewportDebounceTimer = setTimeout(() => {
-        fetchAisVessels();
-    }, 600);
-}
-
 function flyToVessel(vessel) {
     selectedVesselImo.value = vessel.imo_number;
-    const map = mapRef.value?.leafletObject;
-    if (map && vessel.lat != null && vessel.lon != null) {
-        map.flyTo([vessel.lat, vessel.lon], 6, { duration: 1.2 });
-    }
-}
-
-function flyToAisVessel(v) {
-    const map = mapRef.value?.leafletObject;
-    if (map && v.lat != null && v.lon != null) {
-        map.flyTo([v.lat, v.lon], 7, { duration: 1.2 });
+    if (!map || vessel.lat == null || vessel.lon == null) return;
+    const position = { lat: Number(vessel.lat), lng: Number(vessel.lon) };
+    map.panTo(position);
+    map.setZoom(7);
+    const marker = markers.get(vesselKey(vessel));
+    if (marker) {
+        marker.setIcon(vesselSymbol(vessel.course ?? vessel.heading ?? 0, true));
+        openInfoFor(vessel, marker);
     }
 }
 
@@ -739,32 +501,81 @@ async function refresh() {
         loading.value = false;
         fetchAttempted.value = true;
     }
-    // Also refresh AIS if configured
-    if (aisConfigured.value) fetchAisVessels();
+    renderMarkers();
 }
 
-onMounted(refresh);
+async function initMap() {
+    if (!hasKey.value || !mapEl.value) return;
+
+    setOptions({ key: apiKey, v: 'weekly' });
+    const [{ Map }, { Marker }] = await Promise.all([
+        importLibrary('maps'),
+        importLibrary('marker'),
+    ]);
+    MarkerCtor = Marker;
+
+    map = new Map(mapEl.value, {
+        center: { lat: 25.77, lng: -80.18 },
+        zoom: 5,
+        disableDefaultUI: false,
+        streetViewControl: false,
+        mapTypeControl: false,
+        styles: darkMapStyle,
+    });
+
+    infoWindow = new google.maps.InfoWindow();
+    infoWindow.addListener('domready', onInfoDomReady);
+    infoWindow.addListener('closeclick', () => {
+        selectedVesselImo.value = null;
+        renderMarkers();
+    });
+}
+
+// Re-render markers whenever the live vessel list changes.
+watch(() => vesselsStore.liveVessels, renderMarkers, { deep: true });
+
+onMounted(async () => {
+    if (hasKey.value) {
+        try {
+            await initMap();
+        } catch (err) {
+            console.error('Google Maps init failed:', err);
+        }
+    }
+    await refresh();
+});
 
 onBeforeUnmount(() => {
-    clearTimeout(viewportDebounceTimer);
+    clearMarkers();
+    if (infoWindow) {
+        google.maps.event.clearInstanceListeners(infoWindow);
+        infoWindow.close();
+    }
+    map = null;
+    infoWindow = null;
 });
 </script>
 
 <style>
-/* Dark popup overrides */
-.vessel-popup-dark .leaflet-popup-content-wrapper {
-    background: #111827;
-    border: 1px solid #374151;
+/* Dark InfoWindow overrides */
+.gm-style .gm-style-iw-c {
+    background: #111827 !important;
+    border: 1px solid #374151 !important;
     border-radius: 12px !important;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6) !important;
-    padding: 0;
+    padding: 0 !important;
 }
-.vessel-popup-dark .leaflet-popup-tip-container {
-    display: none;
-}
-.vessel-popup-dark .leaflet-popup-content {
-    margin: 0;
+.gm-style .gm-style-iw-d {
+    overflow: hidden !important;
     color: #e5e7eb;
+}
+.gm-style .gm-style-iw-tc::after {
+    background: #111827 !important;
+}
+/* Close button tint */
+.gm-style .gm-style-iw-c button[aria-label="Close"] span,
+.gm-style .gm-ui-hover-effect > span {
+    background-color: #6b7280 !important;
 }
 
 /* Popup inner layout */
@@ -796,18 +607,9 @@ onBeforeUnmount(() => {
     border-radius: 4px;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-}
-.popup-tenant-badge {
-    flex-shrink: 0;
-    font-size: 9px;
-    font-weight: 700;
-    padding: 2px 7px;
-    border-radius: 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    background: rgba(13,148,136,0.2);
-    color: #2dd4bf;
-    border: 1px solid rgba(13,148,136,0.4);
+    background: rgba(31, 41, 55, 0.7);
+    color: #9ca3af;
+    border: 1px solid rgba(75, 85, 99, 0.5);
 }
 .popup-ids {
     font-family: ui-monospace, monospace;
@@ -863,25 +665,4 @@ onBeforeUnmount(() => {
     transition: background 0.15s;
 }
 .popup-view-btn:hover { background: #0d9488; color: #fff; }
-
-.popup-detail-block {
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px solid #1f2937;
-}
-.popup-detail-row {
-    display: flex;
-    justify-content: space-between;
-    gap: 8px;
-    margin-bottom: 4px;
-}
-
-/* Leaflet base popup reset */
-.leaflet-popup-content-wrapper {
-    border-radius: 10px !important;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.18) !important;
-}
-.leaflet-popup-tip {
-    box-shadow: none !important;
-}
 </style>

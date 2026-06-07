@@ -104,6 +104,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Google Maps JavaScript API
+    |--------------------------------------------------------------------------
+    | Browser-side key for the global vessel tracking map. Injected into the
+    | SPA at runtime (window.__GMAPS_KEY__) so it never requires a rebuild.
+    | Get a key at: https://console.cloud.google.com/google/maps-apis
+    */
+    'google_maps' => [
+        'key' => env('GOOGLE_MAPS_API_KEY'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | QuickBooks Online (Intuit) Accounting Integration
     |--------------------------------------------------------------------------
     | OAuth2 connection to QuickBooks Online for pushing invoices.
