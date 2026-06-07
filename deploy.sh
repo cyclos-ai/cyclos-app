@@ -34,6 +34,9 @@ docker compose exec -u root -T app chmod -R 775 "$APP_DIR/storage" "$APP_DIR/boo
 
 echo "==> [5/8] Running migrations (central + all tenants)"
 docker compose exec -T app php artisan migrate --force
+# Central migrations live in a subfolder the default path does NOT scan, so run
+# it explicitly — otherwise new central migrations are silently skipped.
+docker compose exec -T app php artisan migrate --path=database/migrations/central --force
 docker compose exec -T app php artisan tenants:migrate --force
 
 echo "==> [6/8] Clearing stale caches (routes/views/config/cache)"
