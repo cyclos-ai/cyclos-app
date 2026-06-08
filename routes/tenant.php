@@ -111,7 +111,10 @@ Route::middleware(['auth:api', 'throttle:api', 'count.api'])
         Route::prefix('mbls')->name('mbls.')->group(function () {
             Route::get('number/{mbl_number}', [MBLController::class, 'byNumber'])->name('by-number');
             Route::get('/',             [MBLController::class, 'index'])->name('index');
+            Route::post('/',            [MBLController::class, 'store'])->name('store');
             Route::get('{uuid}',        [MBLController::class, 'show'])->name('show');
+            Route::put('{uuid}',        [MBLController::class, 'update'])->name('update');
+            Route::delete('{uuid}',     [MBLController::class, 'destroy'])->name('destroy');
             Route::patch('{uuid}/not-tracking', [MBLController::class, 'updateNotTracking'])->name('not-tracking');
             Route::get('{uuid}/containers',     [MBLController::class, 'containers'])->name('containers');
         });
