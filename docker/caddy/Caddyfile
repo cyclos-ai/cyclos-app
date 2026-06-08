@@ -5,9 +5,13 @@
 	email freighthubcorp@gmail.com
 }
 
-demo.cyclos.ai {
+# Served on BOTH http and https so deploying Caddy never breaks the site even
+# before inbound :443 is opened in the firewall (no forced HTTP->HTTPS redirect).
+# Once :443 is open and verified, switch to https-only by removing the http://
+# scheme below — Caddy will then auto-redirect HTTP to HTTPS.
+http://demo.cyclos.ai, https://demo.cyclos.ai {
 	encode gzip zstd
 	# Preserves the Host header (tenant subdomain detection) and sets
-	# X-Forwarded-Proto=https so Laravel knows the request is secure.
+	# X-Forwarded-Proto so Laravel knows the request scheme.
 	reverse_proxy nginx:80
 }
