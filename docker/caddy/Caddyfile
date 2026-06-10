@@ -9,7 +9,8 @@
 # Served as static files directly by Caddy. The apex must NOT hit the tenant
 # app (which requires a subdomain) — so we serve public/portal/index.html here.
 # Sign In / Get Started on the page link to the app at demo.cyclos.ai.
-cyclos.ai {
+# (www requires its DNS A record pointed at this VM, or its cert will fail.)
+cyclos.ai, www.cyclos.ai {
 	encode gzip zstd
 	root * /srv/landing
 	file_server
