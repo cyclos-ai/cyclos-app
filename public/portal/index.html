@@ -314,7 +314,18 @@
         </svg>
         <span class="wordmark">Cyclos<span>.ai</span></span>
       </div>
-      <div class="env-badge">Demo Environment</div>
+      <nav class="flex items-center gap-2 sm:gap-3">
+        <a href="//demo.cyclos.ai/login"
+           class="text-sm font-medium text-slate-300 hover:text-white transition-colors px-3 py-2">
+          Sign In
+        </a>
+        <a href="//demo.cyclos.ai/register"
+           class="inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-lg text-white transition-all"
+           style="background:linear-gradient(135deg,#0d9488 0%,#14b8a6 100%);box-shadow:0 4px 14px rgba(13,148,136,0.25);"
+           onmouseover="this.style.filter='brightness(1.1)'" onmouseout="this.style.filter='none'">
+          Get Started
+        </a>
+      </nav>
     </header>
 
     <!-- ─── Hero ─── -->
@@ -332,6 +343,25 @@
         Cyclos.ai unifies container tracking, drayage coordination, and milestone management
         into a single intelligent platform — giving every stakeholder live operational clarity.
       </p>
+
+      <!-- ─── Primary CTAs → app ─── -->
+      <div class="opacity-0-init animate-fade-up delay-300 flex flex-col sm:flex-row items-center gap-3 mb-14">
+        <a href="//demo.cyclos.ai/register"
+           class="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white font-semibold text-base transition-all"
+           style="background:linear-gradient(135deg,#0d9488 0%,#14b8a6 100%);box-shadow:0 8px 24px rgba(13,148,136,0.3);"
+           onmouseover="this.style.filter='brightness(1.1)';this.style.transform='translateY(-1px)'"
+           onmouseout="this.style.filter='none';this.style.transform='none'">
+          Get Started
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        <a href="//demo.cyclos.ai/login"
+           class="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-base text-slate-200 transition-all"
+           style="border:1px solid rgba(148,163,184,0.2);background:rgba(148,163,184,0.04);"
+           onmouseover="this.style.borderColor='rgba(13,148,136,0.45)';this.style.color='#fff'"
+           onmouseout="this.style.borderColor='rgba(148,163,184,0.2)';this.style.color='#e2e8f0'">
+          Sign In
+        </a>
+      </div>
 
       <!-- ─── Portal Cards ─── -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 w-full max-w-5xl text-left">
