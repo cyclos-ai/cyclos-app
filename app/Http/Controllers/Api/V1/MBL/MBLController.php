@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api\V1\MBL;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Container\ContainerResource;
 use App\Http\Resources\MBL\MBLResource;
-use App\Models\Tenant\Mbl;
+use App\Models\Tenant\MBL;
 use App\Services\Vessel\VesselLinkingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,7 +21,7 @@ class MBLController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Mbl::query();
+        $query = MBL::query();
 
         if ($request->has('filters')) {
             $this->applyFilters($query, $request->input('filters', []));
@@ -43,7 +43,7 @@ class MBLController extends Controller
     {
         $data = $request->validate($this->validationRules(required: true));
 
-        $mbl = Mbl::create([
+        $mbl = MBL::create([
             'organization_id' => tenancy()->tenant?->id,
             'mbl_number'      => $data['mbl_number'],
             'carrier_scac'    => $data['carrier_scac']   ?? null,
@@ -69,7 +69,7 @@ class MBLController extends Controller
      */
     public function show(string $uuid): JsonResponse
     {
-        $mbl = Mbl::with('vessel')->find($uuid);
+        $mbl = MBL::with('vessel')->find($uuid);
 
         if (! $mbl) {
             return $this->notFound('MBL not found');
@@ -83,7 +83,7 @@ class MBLController extends Controller
      */
     public function update(Request $request, string $uuid): JsonResponse
     {
-        $mbl = Mbl::find($uuid);
+        $mbl = MBL::find($uuid);
 
         if (! $mbl) {
             return $this->notFound('MBL not found');
@@ -117,7 +117,7 @@ class MBLController extends Controller
      */
     public function destroy(string $uuid): JsonResponse
     {
-        $mbl = Mbl::find($uuid);
+        $mbl = MBL::find($uuid);
 
         if (! $mbl) {
             return $this->notFound('MBL not found');
@@ -133,7 +133,7 @@ class MBLController extends Controller
      */
     public function byNumber(string $mblNumber): JsonResponse
     {
-        $mbl = Mbl::with('vessel')->where('mbl_number', $mblNumber)->first();
+        $mbl = MBL::with('vessel')->where('mbl_number', $mblNumber)->first();
 
         if (! $mbl) {
             return $this->notFound('MBL not found');
@@ -147,7 +147,7 @@ class MBLController extends Controller
      */
     public function updateNotTracking(Request $request, string $uuid): JsonResponse
     {
-        $mbl = Mbl::find($uuid);
+        $mbl = MBL::find($uuid);
 
         if (! $mbl) {
             return $this->notFound('MBL not found');
@@ -178,7 +178,7 @@ class MBLController extends Controller
      */
     public function containers(string $uuid, Request $request): JsonResponse
     {
-        $mbl = Mbl::find($uuid);
+        $mbl = MBL::find($uuid);
 
         if (! $mbl) {
             return $this->notFound('MBL not found');
@@ -225,7 +225,7 @@ class MBLController extends Controller
     /**
      * Find or create a vessel from name/imo/mmsi and link it to the MBL.
      */
-    private function maybeLinkVessel(Mbl $mbl, array $data): void
+    private function maybeLinkVessel(MBL $mbl, array $data): void
     {
         if (empty($data['vessel_name']) && empty($data['imo']) && empty($data['mmsi'])) {
             return;
