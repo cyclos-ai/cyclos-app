@@ -49,6 +49,7 @@ export const navigationGroups = [
         label: 'Ocean Freight',
         roles: ['shipper', 'admin'],
         items: [
+            { label: 'New Order', icon: 'pi-plus-circle', to: '/orders/new', name: 'order-import', roles: ['shipper', 'admin'] },
             { label: 'Containers', icon: 'pi-box', to: '/containers', name: 'containers' },
             { label: 'Vessels', icon: 'pi-send', to: '/vessels', name: 'vessels' },
             { label: 'MBLs', icon: 'pi-file', to: '/mbls', name: 'mbls' },

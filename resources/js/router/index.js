@@ -109,6 +109,14 @@ const routes = [
                 meta: { roles: ['shipper', 'admin'] },
             },
 
+            // Orders
+            {
+                path: 'orders/new',
+                name: 'order-import',
+                component: () => import('@/views/orders/OrderImportView.vue'),
+                meta: { roles: ['shipper', 'admin'] },
+            },
+
             // MBLs
             {
                 path: 'mbls',

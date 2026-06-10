@@ -25,6 +25,7 @@ use App\Http\Controllers\Api\V1\Invoice\DrayageInvoiceController;
 use App\Http\Controllers\Api\V1\Invoice\OceanInvoiceController;
 use App\Http\Controllers\Api\V1\Map\MapController;
 use App\Http\Controllers\Api\V1\MBL\MBLController;
+use App\Http\Controllers\Api\V1\Order\OrderImportController;
 use App\Http\Controllers\Api\V1\Organization\OrganizationController;
 use App\Http\Controllers\Api\V1\PurchaseOrder\PurchaseOrderController;
 use App\Http\Controllers\Api\V1\Rail\RailController;
@@ -87,6 +88,11 @@ Route::middleware(['auth:api', 'throttle:api', 'count.api'])
             Route::put('{uuid}/customer-fields/{field_uuid}',            [ContainerCustomerFieldController::class, 'update'])->name('customer-fields.update');
             Route::delete('{uuid}/customer-fields/{field_uuid}',         [ContainerCustomerFieldController::class, 'destroy'])->name('customer-fields.destroy');
         });
+
+        // ----------------------------------------------------------------
+        // Orders (transactional import: MBL + containers + vessel link)
+        // ----------------------------------------------------------------
+        Route::post('orders/import', [OrderImportController::class, 'import'])->name('orders.import');
 
         // ================================================================
         // SHIPPER-ONLY ROUTES
