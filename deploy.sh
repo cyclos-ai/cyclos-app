@@ -46,8 +46,11 @@ echo "==> [7/8] CLEAN-syncing built assets to nginx (rm -rf first — critical)"
 rm -rf public/build
 docker compose cp app:"$APP_DIR/public/build" ./public/build
 
-echo "==> [8/8] Restarting nginx + verifying manifest <-> disk match"
+echo "==> [8/8] Restarting nginx + reloading Caddy + verifying manifest <-> disk match"
 docker compose restart nginx
+# Reload Caddy so Caddyfile changes take effect — a bind-mounted config is NOT
+# applied by `up -d`; only a reload/restart picks it up.
+docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile 2>/dev/null || docker compose restart caddy
 sleep 3
 MANIFEST=""
 for p in public/build/.vite/manifest.json public/build/manifest.json; do
