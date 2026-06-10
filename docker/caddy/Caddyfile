@@ -9,14 +9,19 @@
 # Served as static files directly by Caddy. The apex must NOT hit the tenant
 # app (which requires a subdomain) — so we serve public/portal/index.html here.
 # Sign In / Get Started on the page link to the app at demo.cyclos.ai.
-# NOTE: www.cyclos.ai is deliberately excluded — its DNS points to GoDaddy/
-# Cloudflare, not this VM, so Caddy can't pass the cert challenge for it, and
-# grouping it here failed the whole cert order and broke apex TLS. Re-add www
-# ONLY after pointing its A record at this VM (136.114.154.133).
+# NOTE: www is handled in its OWN block below — never group it with the apex.
+# Grouping www here once failed the shared cert order and broke apex TLS.
 cyclos.ai {
 	encode gzip zstd
 	root * /srv/landing
 	file_server
+}
+
+# ── www → apex (canonical) ───────────────────────────────────────────────────
+# Separate block so its cert is independent — a www cert hiccup can never break
+# cyclos.ai again. (www now has an A record -> this VM, so its cert will issue.)
+www.cyclos.ai {
+	redir https://cyclos.ai{uri} permanent
 }
 
 # ── Application (multi-tenant) ───────────────────────────────────────────────
