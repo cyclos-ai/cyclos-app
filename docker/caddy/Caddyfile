@@ -35,3 +35,14 @@ http://demo.cyclos.ai, https://demo.cyclos.ai {
 	# X-Forwarded-Proto so Laravel knows the request scheme.
 	reverse_proxy nginx:80
 }
+
+# ── Tenant subdomains (customers) ────────────────────────────────────────────
+# Each customer gets their own subdomain -> the app (nginx). Own block per tenant
+# so a cert hiccup on one can never affect another. Each resolves to this VM via
+# the *.cyclos.ai wildcard A record, so its cert issues automatically.
+# (Scalable alternative once the customer list grows: on-demand TLS on
+#  *.cyclos.ai with an app "ask" endpoint — ask me to wire that up.)
+baers.cyclos.ai {
+	encode gzip zstd
+	reverse_proxy nginx:80
+}
