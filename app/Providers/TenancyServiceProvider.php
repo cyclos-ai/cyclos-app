@@ -24,7 +24,7 @@ class TenancyServiceProvider extends ServiceProvider
                     Jobs\SeedDatabase::class,
                 ])->send(function (Events\TenantCreated $event) {
                     return $event->tenant;
-                })->shouldBeQueued(false),
+                })->shouldBeQueued(false)->toListener(),
             ],
             Events\SavingTenant::class => [],
             Events\UpdatingTenant::class => [],
@@ -35,7 +35,7 @@ class TenancyServiceProvider extends ServiceProvider
                     Jobs\DeleteDatabase::class,
                 ])->send(function (Events\TenantDeleted $event) {
                     return $event->tenant;
-                })->shouldBeQueued(false),
+                })->shouldBeQueued(false)->toListener(),
             ],
 
             Events\InitializingTenancy::class => [],
