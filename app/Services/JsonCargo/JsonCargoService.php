@@ -410,55 +410,80 @@ class JsonCargoService
             return null;
         }
 
-        try {
-            $response = Http::timeout(8)
-                ->connectTimeout(5)
-                ->retry(1, 250)
-                ->withHeaders([
-                    'x-api-key' => $this->apiKey,
-                    'Accept'    => 'application/json',
-                ])
-                ->$method($this->baseUrl . $path, $query);
+        $url         = $this->baseUrl . $path;
+        $maxAttempts = 3;
+        $attempt     = 0;
+        $response    = null;
 
-            if ($response->successful()) {
-                // Record billable external API call (guarded — never breaks the request).
-                try {
-                    app(\App\Services\Billing\UsageMeteringService::class)
-                        ->recordApiCall(tenancy()->tenant?->id, 'jsoncargo', true);
-                } catch (\Throwable $e) {
-                    // ignore metering failures
+        // Retry transient failures (5xx gateway outages, connection/timeouts) with
+        // exponential-ish backoff. 4xx (e.g. 400 prefix-not-found, 404) are NOT
+        // retried — they are permanent. This is the defense against JSONCargo's
+        // intermittent 502 Bad Gateway windows.
+        while ($attempt < $maxAttempts) {
+            $attempt++;
+
+            try {
+                $response = Http::timeout(8)
+                    ->connectTimeout(5)
+                    ->withHeaders([
+                        'x-api-key' => $this->apiKey,
+                        'Accept'    => 'application/json',
+                    ])
+                    ->$method($url, $query);
+            } catch (\Throwable $e) {
+                Log::warning("JSONCargo: {$method} {$path} connection error (attempt {$attempt}/{$maxAttempts})", [
+                    'message' => $e->getMessage(),
+                ]);
+                if ($attempt < $maxAttempts) {
+                    usleep(300_000 * $attempt);
+                    continue;
                 }
-
-                return $response->json();
+                return ['error' => 'JSONCargo is unreachable right now. Please try again shortly.', 'status' => 503, 'transient' => true];
             }
 
-            $status = $response->status();
-            $body   = $response->json() ?? [];
-
-            Log::warning("JSONCargo: {$method} {$path} returned {$status}", [
-                'query'    => $query,
-                'response' => $body,
-            ]);
-
-            // Return error structure so controller can relay meaningful messages
-            if ($status === 404) {
-                return ['error' => $body['title'] ?? 'Not found', 'status' => 404];
+            if ($response->serverError()) {
+                Log::warning("JSONCargo: {$method} {$path} returned {$response->status()} (attempt {$attempt}/{$maxAttempts})");
+                if ($attempt < $maxAttempts) {
+                    usleep(300_000 * $attempt);
+                    continue;
+                }
+                return ['error' => 'JSONCargo is temporarily unavailable (HTTP ' . $response->status() . '). Please try again shortly.', 'status' => 503, 'transient' => true];
             }
 
-            if ($status === 429) {
-                return ['error' => 'Rate limit exceeded. Check your JSONCargo plan.', 'status' => 429];
-            }
-
-            return ['error' => $body['title'] ?? 'JSONCargo API error', 'status' => $status];
-        } catch (\Throwable $e) {
-            Log::error('JSONCargo: Request failed', [
-                'path'    => $path,
-                'query'   => $query,
-                'message' => $e->getMessage(),
-            ]);
-
-            return null;
+            break; // 2xx or 4xx — stop retrying
         }
+
+        if ($response->successful()) {
+            // Record billable external API call (guarded — never breaks the request).
+            try {
+                app(\App\Services\Billing\UsageMeteringService::class)
+                    ->recordApiCall(tenancy()->tenant?->id, 'jsoncargo', true);
+            } catch (\Throwable $e) {
+                // ignore metering failures
+            }
+
+            return $response->json();
+        }
+
+        $status = $response->status();
+        $body   = $response->json() ?? [];
+
+        Log::warning("JSONCargo: {$method} {$path} returned {$status}", [
+            'query'    => $query,
+            'response' => $body,
+        ]);
+
+        // Permanent client errors — surface the upstream reason as-is.
+        if ($status === 404) {
+            return ['error' => $body['title'] ?? 'Not found', 'status' => 404];
+        }
+
+        if ($status === 429) {
+            return ['error' => 'Rate limit exceeded. Check your JSONCargo plan.', 'status' => 429, 'transient' => true];
+        }
+
+        // 400 (e.g. "prefix not found for ZIM") and other 4xx are permanent.
+        return ['error' => $body['title'] ?? 'JSONCargo API error', 'status' => $status];
     }
 
     /**
