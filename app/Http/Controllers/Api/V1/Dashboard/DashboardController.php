@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1\Dashboard;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Dashboard\DashboardResource;
+use App\Models\Tenant\Container;
 use App\Models\Tenant\Dashboard;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -11,12 +12,62 @@ use Illuminate\Http\Request;
 class DashboardController extends Controller
 {
     /**
+     * GET /api/v1/dashboard/stats
+     * Real KPI tiles for the overview page, scoped to the current tenant.
+     * Returns a FLAT object — the overview reads these keys directly.
+     */
+    public function stats(Request $request): JsonResponse
+    {
+        $total      = Container::count();
+        $inTransit  = Container::whereIn('status', ['LOADED_ON_VESSEL', 'ON_WATER', 'AWAITING_DISCHARGE'])->count();
+        $atTerminal = Container::whereIn('status', ['AT_OCEAN_TERMINAL', 'ARRIVED_AT_RAIL_TERMINAL'])->count();
+        $alerts     = Container::whereNotNull('last_free_day_demurrage')
+            ->whereDate('last_free_day_demurrage', '<=', now()->addDays(3))
+            ->count();
+
+        return response()->json([
+            'total_containers' => $total,
+            'in_transit'       => $inTransit,
+            'at_terminal'      => $atTerminal,
+            'alerts'           => $alerts,
+            'containers_trend' => null,
+            'transit_trend'    => null,
+            'terminal_trend'   => null,
+            'alerts_trend'     => null,
+        ]);
+    }
+
+    /**
+     * GET /api/v1/dashboards/default
+     * The tenant's default dashboard + widgets (empty shape if none yet).
+     * Registered before {uuid} so "default" is not treated as an id.
+     */
+    public function default(Request $request): JsonResponse
+    {
+        $dashboard = Dashboard::where('organization_id', tenancy()->tenant?->id)
+            ->where('is_default', true)
+            ->with('widgets')
+            ->first();
+
+        return response()->json([
+            'uuid'    => $dashboard?->id,
+            'name'    => $dashboard?->name ?? 'Overview',
+            'widgets' => $dashboard?->widgets ?? [],
+        ]);
+    }
+
+    /**
      * GET /api/v1/dashboards
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Dashboard::where('user_id', $request->user()->id)
-            ->orWhere('is_shared', true);
+        $query = Dashboard::where('organization_id', tenancy()->tenant?->id)
+            ->where(function ($q) use ($request) {
+                $q->where('user_id', $request->user()->id)
+                  ->orWhereNull('user_id')
+                  ->orWhere('is_shared', true)
+                  ->orWhere('is_default', true);
+            });
 
         $this->applySorting(
             $query,
@@ -32,9 +83,7 @@ class DashboardController extends Controller
      */
     public function show(string $uuid, Request $request): JsonResponse
     {
-        $dashboard = Dashboard::where('uuid', $uuid)
-            ->with('widgets')
-            ->first();
+        $dashboard = Dashboard::with('widgets')->find($uuid);
 
         if (! $dashboard) {
             return $this->notFound('Dashboard not found');
@@ -55,10 +104,11 @@ class DashboardController extends Controller
         ]);
 
         $dashboard = Dashboard::create([
-            'name'      => $request->input('name'),
-            'user_id'   => $request->user()->id,
-            'is_shared' => $request->boolean('is_shared', false),
-            'layout'    => $request->input('layout'),
+            'organization_id' => tenancy()->tenant?->id,
+            'name'            => $request->input('name'),
+            'user_id'         => $request->user()->id,
+            'is_shared'       => $request->boolean('is_shared', false),
+            'layout'          => $request->input('layout'),
         ]);
 
         return $this->created(new DashboardResource($dashboard), 'Dashboard created');
@@ -69,7 +119,7 @@ class DashboardController extends Controller
      */
     public function update(Request $request, string $uuid): JsonResponse
     {
-        $dashboard = Dashboard::where('uuid', $uuid)->first();
+        $dashboard = Dashboard::find($uuid);
 
         if (! $dashboard) {
             return $this->notFound('Dashboard not found');
@@ -91,7 +141,7 @@ class DashboardController extends Controller
      */
     public function destroy(string $uuid): JsonResponse
     {
-        $dashboard = Dashboard::where('uuid', $uuid)->first();
+        $dashboard = Dashboard::find($uuid);
 
         if (! $dashboard) {
             return $this->notFound('Dashboard not found');
@@ -107,21 +157,17 @@ class DashboardController extends Controller
      */
     public function addWidget(Request $request, string $uuid): JsonResponse
     {
-        $dashboard = Dashboard::where('uuid', $uuid)->first();
+        $dashboard = Dashboard::find($uuid);
 
         if (! $dashboard) {
             return $this->notFound('Dashboard not found');
         }
 
         $request->validate([
-            'widget_type'   => 'required|string|max:100',
-            'title'         => 'required|string|max:255',
-            'config'        => 'nullable|array',
-            'position'      => 'nullable|array',
-            'position.x'    => 'nullable|integer|min:0',
-            'position.y'    => 'nullable|integer|min:0',
-            'position.w'    => 'nullable|integer|min:1',
-            'position.h'    => 'nullable|integer|min:1',
+            'widget_type' => 'required|string|max:100',
+            'title'       => 'required|string|max:255',
+            'config'      => 'nullable|array',
+            'position'    => 'nullable|array',
         ]);
 
         $widget = $dashboard->widgets()->create([
@@ -139,22 +185,22 @@ class DashboardController extends Controller
      */
     public function updateWidget(Request $request, string $dashboardUuid, string $widgetUuid): JsonResponse
     {
-        $dashboard = Dashboard::where('uuid', $dashboardUuid)->first();
+        $dashboard = Dashboard::find($dashboardUuid);
 
         if (! $dashboard) {
             return $this->notFound('Dashboard not found');
         }
 
-        $widget = $dashboard->widgets()->where('uuid', $widgetUuid)->first();
+        $widget = $dashboard->widgets()->find($widgetUuid);
 
         if (! $widget) {
             return $this->notFound('Widget not found');
         }
 
         $request->validate([
-            'title'      => 'sometimes|string|max:255',
-            'config'     => 'nullable|array',
-            'position'   => 'nullable|array',
+            'title'    => 'sometimes|string|max:255',
+            'config'   => 'nullable|array',
+            'position' => 'nullable|array',
         ]);
 
         $widget->update($request->only(['title', 'config', 'position']));
@@ -167,13 +213,13 @@ class DashboardController extends Controller
      */
     public function removeWidget(string $dashboardUuid, string $widgetUuid): JsonResponse
     {
-        $dashboard = Dashboard::where('uuid', $dashboardUuid)->first();
+        $dashboard = Dashboard::find($dashboardUuid);
 
         if (! $dashboard) {
             return $this->notFound('Dashboard not found');
         }
 
-        $widget = $dashboard->widgets()->where('uuid', $widgetUuid)->first();
+        $widget = $dashboard->widgets()->find($widgetUuid);
 
         if (! $widget) {
             return $this->notFound('Widget not found');

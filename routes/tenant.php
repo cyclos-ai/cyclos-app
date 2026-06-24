@@ -275,9 +275,12 @@ Route::middleware(['auth:api', 'throttle:api', 'count.api'])
         // ----------------------------------------------------------------
         // Dashboards (shared)
         // ----------------------------------------------------------------
+        Route::get('dashboard/stats', [DashboardController::class, 'stats'])->name('dashboard.stats');
+
         Route::prefix('dashboards')->name('dashboards.')->group(function () {
             Route::get('/',         [DashboardController::class, 'index'])->name('index');
             Route::post('/',        [DashboardController::class, 'store'])->name('store');
+            Route::get('default',   [DashboardController::class, 'default'])->name('default');
             Route::get('{uuid}',    [DashboardController::class, 'show'])->name('show');
             Route::put('{uuid}',    [DashboardController::class, 'update'])->name('update');
             Route::delete('{uuid}', [DashboardController::class, 'destroy'])->name('destroy');

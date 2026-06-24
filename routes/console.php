@@ -20,29 +20,27 @@ Artisan::command('inspire', function () {
 |--------------------------------------------------------------------------
 */
 
-// Poll tracking updates every 15 minutes
-Schedule::command('tracking:poll-updates')->everyFifteenMinutes();
+// Poll active carrier tracking requests every 15 minutes
+Schedule::command('tracking:poll-carriers')->everyFifteenMinutes();
 
-// Recalculate demurrage/detention charges daily at 1 AM
-Schedule::command('demurrage:recalculate')->dailyAt('01:00');
+// Refresh container tracking from JSONCargo every 2 hours (keeps status/ETA fresh)
+Schedule::command('tracking:refresh-jsoncargo')->everyTwoHours();
 
-// Send demurrage alarm notifications daily at 7 AM
-Schedule::command('demurrage:send-alarms')->dailyAt('07:00');
+// Sync vessel AIS positions every 30 minutes
+Schedule::command('tracking:poll-ais')->everyThirtyMinutes();
 
-// Sync vessel positions every 30 minutes
-Schedule::command('vessels:sync-positions')->everyThirtyMinutes();
+// Calculate demurrage/detention charges daily at 1 AM
+Schedule::command('billing:calculate-demurrage')->dailyAt('01:00');
 
-// Process pending webhooks every minute
-Schedule::command('webhooks:process-queue')->everyMinute();
+// Generate due scheduled reports hourly
+Schedule::command('reports:process-scheduled')->hourly();
 
-// Generate scheduled reports
-Schedule::command('reports:generate-scheduled')->hourly();
-
-// Clean up old tracking poll logs (keep 30 days)
-Schedule::command('tracking:clean-logs')->weekly();
-
-// Clean up expired Passport tokens
+// Clean up expired Passport tokens daily
 Schedule::command('passport:purge --revoked --expired')->daily();
 
-// Report billable usage to Stripe Billing Meters
+// Report billable usage to Stripe Billing Meters hourly
 Schedule::command('billing:report-usage')->hourly();
+
+// NOTE: the following were scheduled but never implemented; removed to stop the
+// scheduler from erroring every run. Re-add when the commands exist:
+//   webhooks:process-queue, demurrage:send-alarms, tracking:clean-logs

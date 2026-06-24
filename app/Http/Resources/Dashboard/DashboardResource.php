@@ -10,9 +10,10 @@ class DashboardResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'uuid'       => $this->uuid,
+            'uuid'       => $this->id,
             'name'       => $this->name,
             'is_shared'  => (bool) $this->is_shared,
+            'is_default' => (bool) $this->is_default,
             'layout'     => $this->layout,
             'user_id'    => $this->user_id,
             'widgets'    => $this->whenLoaded('widgets'),
