@@ -64,6 +64,11 @@ class Container extends Model
         return $this->hasMany(ContainerEvent::class);
     }
 
+    public function documents(): HasMany
+    {
+        return $this->hasMany(Document::class);
+    }
+
     public function trackingRequests(): HasMany
     {
         return $this->hasMany(TrackingRequest::class);

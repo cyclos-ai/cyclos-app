@@ -25,6 +25,7 @@ use App\Http\Controllers\Api\V1\Invoice\DrayageInvoiceController;
 use App\Http\Controllers\Api\V1\Invoice\OceanInvoiceController;
 use App\Http\Controllers\Api\V1\Map\MapController;
 use App\Http\Controllers\Api\V1\MBL\MBLController;
+use App\Http\Controllers\Api\V1\Document\DocumentController;
 use App\Http\Controllers\Api\V1\Order\OrderImportController;
 use App\Http\Controllers\Api\V1\Organization\OrganizationController;
 use App\Http\Controllers\Api\V1\PurchaseOrder\PurchaseOrderController;
@@ -80,6 +81,7 @@ Route::middleware(['auth:api', 'throttle:api', 'count.api'])
             Route::patch('{uuid}/empty-return', [ContainerController::class, 'emptyReturn'])->name('empty-return');
             Route::get('{uuid}/location-history', [ContainerController::class, 'locationHistory'])->name('location-history');
             Route::post('{uuid}/link-vessel',    [ContainerController::class, 'linkVessel'])->name('link-vessel');
+            Route::patch('{uuid}/status',        [ContainerController::class, 'updateStatus'])->name('status');
 
             // Container customer fields (nested)
             Route::get('{uuid}/customer-fields',                         [ContainerCustomerFieldController::class, 'index'])->name('customer-fields.index');
@@ -276,6 +278,15 @@ Route::middleware(['auth:api', 'throttle:api', 'count.api'])
         // Dashboards (shared)
         // ----------------------------------------------------------------
         Route::get('dashboard/stats', [DashboardController::class, 'stats'])->name('dashboard.stats');
+
+        // Documents (PDF/file storage attached to shipments)
+        Route::prefix('documents')->name('documents.')->group(function () {
+            Route::get('/',               [DocumentController::class, 'index'])->name('index');
+            Route::post('/',              [DocumentController::class, 'store'])->name('store');
+            Route::get('{uuid}',          [DocumentController::class, 'show'])->name('show');
+            Route::get('{uuid}/download', [DocumentController::class, 'download'])->name('download');
+            Route::delete('{uuid}',       [DocumentController::class, 'destroy'])->name('destroy');
+        });
 
         Route::prefix('dashboards')->name('dashboards.')->group(function () {
             Route::get('/',         [DashboardController::class, 'index'])->name('index');

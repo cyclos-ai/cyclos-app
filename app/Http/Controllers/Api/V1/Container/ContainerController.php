@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1\Container;
 
+use App\Domain\Container\Enums\ContainerEventType;
 use App\Domain\Container\Enums\ContainerStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Container\FilterContainerRequest;
@@ -9,9 +10,11 @@ use App\Http\Requests\Container\StoreContainerRequest;
 use App\Http\Requests\Container\UpdateContainerRequest;
 use App\Http\Resources\Container\ContainerResource;
 use App\Models\Tenant\Container;
+use App\Models\Tenant\ContainerEvent;
 use App\Services\Vessel\VesselLinkingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ContainerController extends Controller
 {
@@ -296,6 +299,49 @@ class ContainerController extends Controller
         $container->update(['is_priority' => $request->input('priority')]);
 
         return $this->success(new ContainerResource($container->fresh()->load('mbl')), 'Priority updated');
+    }
+
+    /**
+     * PATCH /api/v1/containers/{uuid}/status
+     * Manually set a container's status (admin override). Logs a manual event so
+     * the change is auditable in the container timeline.
+     */
+    public function updateStatus(Request $request, string $uuid): JsonResponse
+    {
+        $container = Container::find($uuid);
+
+        if (! $container) {
+            return $this->notFound('Container not found');
+        }
+
+        $validated = $request->validate([
+            'status' => ['required', Rule::enum(ContainerStatus::class)],
+            'note'   => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $previous = $container->status;
+        $new      = ContainerStatus::from($validated['status']);
+
+        $container->update(['status' => $new]);
+
+        ContainerEvent::create([
+            'container_id' => $container->id,
+            'event_type'   => ContainerEventType::MANUAL_UPDATE->value,
+            'description'  => $validated['note']
+                ?? ('Status manually changed from ' . ($previous?->label() ?? 'n/a') . ' to ' . $new->label()),
+            'event_date'   => now(),
+            'raw_data'     => [
+                'manual'  => true,
+                'from'    => $previous?->value,
+                'to'      => $new->value,
+                'user_id' => $request->user()?->id,
+            ],
+        ]);
+
+        return $this->success(
+            new ContainerResource($container->fresh()->load(['mbl', 'vessel'])),
+            'Status updated'
+        );
     }
 
     /**
